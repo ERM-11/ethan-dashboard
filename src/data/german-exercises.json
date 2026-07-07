@@ -1,0 +1,519 @@
+[
+  {
+    "id": 1,
+    "level": "A2",
+    "theme": "Im Restaurant",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Hast du schon etwas gefunden, was dir schmeckt?",
+        "blank": "Hast du schon etwas ___, was dir schmeckt?",
+        "answer": "gefunden",
+        "english": "Have you already found something you like?"
+      },
+      {
+        "speaker": "B",
+        "german": "Ja, ich möchte gern das Schnitzel mit Pommes.",
+        "blank": "Ja, ich ___ gern das Schnitzel mit Pommes.",
+        "answer": "möchte",
+        "english": "Yes, I'd like the schnitzel with fries."
+      },
+      {
+        "speaker": "A",
+        "german": "Gute Wahl! Ich habe das letzte Mal die Suppe genommen.",
+        "blank": "Gute Wahl! Ich habe das letzte Mal die Suppe ___.",
+        "answer": "genommen",
+        "english": "Good choice! Last time I had the soup."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "level": "A2",
+    "theme": "Beim Arzt",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Guten Tag, ich habe seit gestern starke Kopfschmerzen.",
+        "blank": "Guten Tag, ich habe ___ gestern starke Kopfschmerzen.",
+        "answer": "seit",
+        "english": "Hello, I've had a bad headache since yesterday."
+      },
+      {
+        "speaker": "B",
+        "german": "Haben Sie schon eine Tablette genommen?",
+        "blank": "Haben Sie schon eine Tablette ___?",
+        "answer": "genommen",
+        "english": "Have you already taken a pill?"
+      },
+      {
+        "speaker": "A",
+        "german": "Nein, ich wollte zuerst mit Ihnen sprechen.",
+        "blank": "Nein, ich ___ zuerst mit Ihnen sprechen.",
+        "answer": "wollte",
+        "english": "No, I wanted to talk to you first."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "level": "A2",
+    "theme": "Am Bahnhof",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Entschuldigung, wann fährt der nächste Zug nach Köln?",
+        "blank": "Entschuldigung, wann ___ der nächste Zug nach Köln?",
+        "answer": "fährt",
+        "english": "Excuse me, when does the next train to Cologne leave?"
+      },
+      {
+        "speaker": "B",
+        "german": "Um 14:20 Uhr, aber Sie müssen am Gleis 7 umsteigen.",
+        "blank": "Um 14:20 Uhr, aber Sie ___ am Gleis 7 umsteigen.",
+        "answer": "müssen",
+        "english": "At 2:20 p.m., but you have to change at platform 7."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "level": "A2",
+    "theme": "Einkaufen",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Ich suche einen warmen Pullover für den Winter.",
+        "blank": "Ich suche ___ warmen Pullover für den Winter.",
+        "answer": "einen",
+        "english": "I'm looking for a warm sweater for winter."
+      },
+      {
+        "speaker": "B",
+        "german": "Welche Größe tragen Sie denn?",
+        "blank": "Welche Größe ___ Sie denn?",
+        "answer": "tragen",
+        "english": "What size do you wear?"
+      },
+      {
+        "speaker": "A",
+        "german": "Normalerweise trage ich Größe M.",
+        "blank": "Normalerweise ___ ich Größe M.",
+        "answer": "trage",
+        "english": "I usually wear a medium."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "level": "A2",
+    "theme": "Im Café",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Möchtest du lieber Kaffee oder Tee?",
+        "blank": "Möchtest du ___ Kaffee oder Tee?",
+        "answer": "lieber",
+        "english": "Would you rather have coffee or tea?"
+      },
+      {
+        "speaker": "B",
+        "german": "Einen Kaffee bitte, ich habe heute noch keinen getrunken.",
+        "blank": "Einen Kaffee bitte, ich habe heute noch keinen ___.",
+        "answer": "getrunken",
+        "english": "A coffee please, I haven't had one yet today."
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "level": "A2",
+    "theme": "Im Hotel",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Guten Abend, ich habe ein Zimmer für zwei Nächte reserviert.",
+        "blank": "Guten Abend, ich habe ein Zimmer für zwei Nächte ___.",
+        "answer": "reserviert",
+        "english": "Good evening, I've booked a room for two nights."
+      },
+      {
+        "speaker": "B",
+        "german": "Ah ja, hier ist Ihr Schlüssel. Das Frühstück gibt es ab sieben Uhr.",
+        "blank": "Ah ja, hier ist Ihr Schlüssel. Das Frühstück ___ es ab sieben Uhr.",
+        "answer": "gibt",
+        "english": "Ah yes, here's your key. Breakfast is served from seven o'clock."
+      },
+      {
+        "speaker": "A",
+        "german": "Super, kann ich mein Auto vor dem Hotel parken?",
+        "blank": "Super, ___ ich mein Auto vor dem Hotel parken?",
+        "answer": "kann",
+        "english": "Great, can I park my car in front of the hotel?"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "level": "A2",
+    "theme": "Beim Bäcker",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Ich hätte gern vier Brötchen und ein Roggenbrot.",
+        "blank": "Ich hätte ___ vier Brötchen und ein Roggenbrot.",
+        "answer": "gern",
+        "english": "I'd like four rolls and a rye bread."
+      },
+      {
+        "speaker": "B",
+        "german": "Das Roggenbrot ist leider schon ausverkauft.",
+        "blank": "Das Roggenbrot ist leider schon ___.",
+        "answer": "ausverkauft",
+        "english": "Unfortunately, the rye bread is already sold out."
+      },
+      {
+        "speaker": "A",
+        "german": "Schade, dann nehme ich ein Vollkornbrot.",
+        "blank": "Schade, dann ___ ich ein Vollkornbrot.",
+        "answer": "nehme",
+        "english": "Too bad, then I'll take a whole-grain loaf."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "level": "A2",
+    "theme": "Am Telefon",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Hallo Anna, ich habe dich gestern dreimal angerufen!",
+        "blank": "Hallo Anna, ich habe dich gestern dreimal ___!",
+        "answer": "angerufen",
+        "english": "Hi Anna, I called you three times yesterday!"
+      },
+      {
+        "speaker": "B",
+        "german": "Tut mir leid, mein Handy war den ganzen Tag kaputt.",
+        "blank": "Tut mir leid, mein Handy ___ den ganzen Tag kaputt.",
+        "answer": "war",
+        "english": "Sorry, my phone was broken all day."
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "level": "A2",
+    "theme": "Im Supermarkt",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Entschuldigung, wo finde ich die Milchprodukte?",
+        "blank": "Entschuldigung, wo ___ ich die Milchprodukte?",
+        "answer": "finde",
+        "english": "Excuse me, where can I find the dairy products?"
+      },
+      {
+        "speaker": "B",
+        "german": "Ganz hinten links, neben dem Käse.",
+        "blank": "Ganz hinten links, ___ dem Käse.",
+        "answer": "neben",
+        "english": "All the way in the back on the left, next to the cheese."
+      },
+      {
+        "speaker": "A",
+        "german": "Danke, ich habe den Joghurt nirgendwo gesehen.",
+        "blank": "Danke, ich habe den Joghurt nirgendwo ___.",
+        "answer": "gesehen",
+        "english": "Thanks, I couldn't see the yogurt anywhere."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "level": "A2",
+    "theme": "Beim Friseur",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Wie kurz sollen die Haare denn werden?",
+        "blank": "Wie kurz ___ die Haare denn werden?",
+        "answer": "sollen",
+        "english": "How short should your hair be?"
+      },
+      {
+        "speaker": "B",
+        "german": "Nur ein bisschen, ich will keinen kurzen Schnitt.",
+        "blank": "Nur ein bisschen, ich will ___ kurzen Schnitt.",
+        "answer": "keinen",
+        "english": "Just a little, I don't want a short cut."
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "level": "A2",
+    "theme": "Wetter und Smalltalk",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Gestern hat es den ganzen Tag geregnet.",
+        "blank": "Gestern hat es den ganzen Tag ___.",
+        "answer": "geregnet",
+        "english": "It rained all day yesterday."
+      },
+      {
+        "speaker": "B",
+        "german": "Ja, aber morgen soll die Sonne wieder scheinen.",
+        "blank": "Ja, aber morgen soll die Sonne wieder ___.",
+        "answer": "scheinen",
+        "english": "Yes, but tomorrow the sun is supposed to shine again."
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "level": "A2",
+    "theme": "In der Apotheke",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Haben Sie etwas gegen Halsschmerzen?",
+        "blank": "Haben Sie etwas ___ Halsschmerzen?",
+        "answer": "gegen",
+        "english": "Do you have anything for a sore throat?"
+      },
+      {
+        "speaker": "B",
+        "german": "Ja, diese Lutschtabletten helfen sehr gut.",
+        "blank": "Ja, diese Lutschtabletten ___ sehr gut.",
+        "answer": "helfen",
+        "english": "Yes, these lozenges work very well."
+      },
+      {
+        "speaker": "A",
+        "german": "Prima, wie oft darf ich sie nehmen?",
+        "blank": "Prima, wie oft ___ ich sie nehmen?",
+        "answer": "darf",
+        "english": "Great, how often can I take them?"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "level": "A2",
+    "theme": "Am Flughafen",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Unser Flug hat schon wieder Verspätung!",
+        "blank": "Unser Flug hat schon wieder ___!",
+        "answer": "Verspätung",
+        "english": "Our flight is delayed again!"
+      },
+      {
+        "speaker": "B",
+        "german": "Wirklich? Dann können wir noch einen Kaffee trinken.",
+        "blank": "Wirklich? Dann ___ wir noch einen Kaffee trinken.",
+        "answer": "können",
+        "english": "Really? Then we can still grab a coffee."
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "level": "A2",
+    "theme": "Bei Freunden",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Danke für die Einladung, dein Essen war fantastisch!",
+        "blank": "Danke für die Einladung, dein Essen ___ fantastisch!",
+        "answer": "war",
+        "english": "Thanks for the invitation, your food was fantastic!"
+      },
+      {
+        "speaker": "B",
+        "german": "Freut mich! Ich habe den Kuchen selbst gebacken.",
+        "blank": "Freut mich! Ich habe den Kuchen selbst ___.",
+        "answer": "gebacken",
+        "english": "Glad to hear it! I baked the cake myself."
+      },
+      {
+        "speaker": "A",
+        "german": "Kannst du mir das Rezept geben?",
+        "blank": "Kannst du ___ das Rezept geben?",
+        "answer": "mir",
+        "english": "Can you give me the recipe?"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "level": "A2",
+    "theme": "Im Kino",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Zwei Karten für den Film um acht, bitte.",
+        "blank": "Zwei Karten ___ den Film um acht, bitte.",
+        "answer": "für",
+        "english": "Two tickets for the eight o'clock movie, please."
+      },
+      {
+        "speaker": "B",
+        "german": "Gern, möchten Sie in der Mitte sitzen?",
+        "blank": "Gern, möchten Sie in der Mitte ___?",
+        "answer": "sitzen",
+        "english": "Sure, would you like to sit in the middle?"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "level": "A2",
+    "theme": "Im Bus",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Ist dieser Platz noch frei?",
+        "blank": "Ist dieser Platz noch ___?",
+        "answer": "frei",
+        "english": "Is this seat still free?"
+      },
+      {
+        "speaker": "B",
+        "german": "Ja, klar. Ich bin auch gerade erst eingestiegen.",
+        "blank": "Ja, klar. Ich bin auch gerade erst ___.",
+        "answer": "eingestiegen",
+        "english": "Yes, of course. I only just got on myself."
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "level": "A2",
+    "theme": "Geburtstag",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Herzlichen Glückwunsch! Ich habe dir ein Geschenk mitgebracht.",
+        "blank": "Herzlichen Glückwunsch! Ich habe dir ein Geschenk ___.",
+        "answer": "mitgebracht",
+        "english": "Happy birthday! I brought you a present."
+      },
+      {
+        "speaker": "B",
+        "german": "Oh, das wäre doch nicht nötig gewesen!",
+        "blank": "Oh, das wäre doch nicht nötig ___!",
+        "answer": "gewesen",
+        "english": "Oh, you shouldn't have!"
+      },
+      {
+        "speaker": "A",
+        "german": "Doch, du hast mir letztes Jahr auch etwas geschenkt.",
+        "blank": "Doch, du hast mir letztes Jahr auch etwas ___.",
+        "answer": "geschenkt",
+        "english": "Of course, you gave me something last year too."
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "level": "A2",
+    "theme": "Auf dem Markt",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Was kosten die Tomaten heute?",
+        "blank": "Was ___ die Tomaten heute?",
+        "answer": "kosten",
+        "english": "How much are the tomatoes today?"
+      },
+      {
+        "speaker": "B",
+        "german": "Drei Euro das Kilo, sie kommen direkt vom Bauernhof.",
+        "blank": "Drei Euro das Kilo, sie kommen direkt ___ Bauernhof.",
+        "answer": "vom",
+        "english": "Three euros a kilo, they come straight from the farm."
+      },
+      {
+        "speaker": "A",
+        "german": "Dann geben Sie mir bitte zwei Kilo.",
+        "blank": "Dann ___ Sie mir bitte zwei Kilo.",
+        "answer": "geben",
+        "english": "Then give me two kilos, please."
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "level": "A2",
+    "theme": "Beim Umzug",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Kannst du mir am Samstag beim Umzug helfen?",
+        "blank": "Kannst du mir am Samstag beim Umzug ___?",
+        "answer": "helfen",
+        "english": "Can you help me move on Saturday?"
+      },
+      {
+        "speaker": "B",
+        "german": "Klar, ich habe schon oft Kisten getragen.",
+        "blank": "Klar, ich habe schon oft Kisten ___.",
+        "answer": "getragen",
+        "english": "Sure, I've carried plenty of boxes before."
+      },
+      {
+        "speaker": "A",
+        "german": "Danke! Danach lade ich dich zur Pizza ein.",
+        "blank": "Danke! Danach lade ich dich zur Pizza ___.",
+        "answer": "ein",
+        "english": "Thanks! Afterwards I'll treat you to pizza."
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "level": "A2",
+    "theme": "Im Schwimmbad",
+    "dialogue": [
+      {
+        "speaker": "A",
+        "german": "Bist du heute schon geschwommen?",
+        "blank": "Bist du heute schon ___?",
+        "answer": "geschwommen",
+        "english": "Have you already been swimming today?"
+      },
+      {
+        "speaker": "B",
+        "german": "Ja, aber das Wasser war ziemlich kalt.",
+        "blank": "Ja, aber das Wasser war ziemlich ___.",
+        "answer": "kalt",
+        "english": "Yes, but the water was pretty cold."
+      }
+    ]
+  },
+{"id":21,"level":"B1","theme":"Im Büro","dialogue":[{"speaker":"A","german":"Ich weiß nicht, ob der Bericht schon fertig ist.","blank":"Ich weiß nicht, ___ der Bericht schon fertig ist.","answer":"ob","english":"I don't know whether the report is finished yet."},{"speaker":"B","german":"Ich glaube, dass die Kollegen noch daran arbeiten.","blank":"Ich glaube, ___ die Kollegen noch daran arbeiten.","answer":"dass","english":"I think the colleagues are still working on it."}]},
+{"id":22,"level":"B1","theme":"Beim Vorstellungsgespräch","dialogue":[{"speaker":"A","german":"Warum interessieren Sie sich für diese Stelle?","blank":"Warum interessieren Sie ___ für diese Stelle?","answer":"sich","english":"Why are you interested in this position?"},{"speaker":"B","german":"Weil ich gern mit Zahlen arbeite und Verantwortung übernehmen möchte.","blank":"___ ich gern mit Zahlen arbeite und Verantwortung übernehmen möchte.","answer":"Weil","english":"Because I like working with numbers and want to take on responsibility."}]},
+{"id":23,"level":"B1","theme":"Wohnungssuche","dialogue":[{"speaker":"A","german":"Die Wohnung, die wir gestern besichtigt haben, war zu teuer.","blank":"Die Wohnung, ___ wir gestern besichtigt haben, war zu teuer.","answer":"die","english":"The flat that we viewed yesterday was too expensive."},{"speaker":"B","german":"Wir sollten uns nach einer kleineren Wohnung umsehen.","blank":"Wir sollten uns nach einer kleineren Wohnung ___.","answer":"umsehen","english":"We should look around for a smaller flat."}]},
+{"id":24,"level":"B1","theme":"Reisen","dialogue":[{"speaker":"A","german":"Ich freue mich schon auf den Urlaub in Österreich.","blank":"Ich freue mich schon ___ den Urlaub in Österreich.","answer":"auf","english":"I'm already looking forward to the holiday in Austria."},{"speaker":"B","german":"Denk daran, dass du deinen Reisepass mitnehmen musst.","blank":"Denk ___, dass du deinen Reisepass mitnehmen musst.","answer":"daran","english":"Remember that you have to take your passport."}]},
+{"id":25,"level":"B1","theme":"Im Büro","dialogue":[{"speaker":"A","german":"Könnten Sie mir bitte bei der Präsentation helfen?","blank":"Könnten Sie mir bitte ___ der Präsentation helfen?","answer":"bei","english":"Could you please help me with the presentation?"},{"speaker":"B","german":"Natürlich, nachdem ich diese E-Mail geschrieben habe.","blank":"Natürlich, ___ ich diese E-Mail geschrieben habe.","answer":"nachdem","english":"Of course, after I've written this email."}]},
+{"id":26,"level":"B1","theme":"Gesundheit","dialogue":[{"speaker":"A","german":"Du solltest dich mehr bewegen, wenn du fit bleiben willst.","blank":"Du solltest ___ mehr bewegen, wenn du fit bleiben willst.","answer":"dich","english":"You should exercise more if you want to stay fit."},{"speaker":"B","german":"Du hast recht, ich melde mich im Fitnessstudio an.","blank":"Du hast recht, ich melde mich im Fitnessstudio ___.","answer":"an","english":"You're right, I'll sign up at the gym."}]},
+{"id":27,"level":"B1","theme":"Am Bahnhof","dialogue":[{"speaker":"A","german":"Der Zug hat wegen eines Unwetters Verspätung.","blank":"Der Zug hat ___ eines Unwetters Verspätung.","answer":"wegen","english":"The train is delayed because of a storm."},{"speaker":"B","german":"Dann müssen wir den Anschlusszug leider verpassen.","blank":"Dann müssen wir den Anschlusszug leider ___.","answer":"verpassen","english":"Then unfortunately we'll miss the connecting train."}]},
+{"id":28,"level":"B1","theme":"Studium","dialogue":[{"speaker":"A","german":"Ich bereite mich gerade auf eine wichtige Prüfung vor.","blank":"Ich bereite mich gerade auf eine wichtige Prüfung ___.","answer":"vor","english":"I'm currently preparing for an important exam."},{"speaker":"B","german":"Wie lange lernst du schon dafür?","blank":"Wie lange ___ du schon dafür?","answer":"lernst","english":"How long have you been studying for it?"}]},
+{"id":29,"level":"B1","theme":"Nachbarschaft","dialogue":[{"speaker":"A","german":"Könnten Sie bitte die Musik leiser machen?","blank":"Könnten Sie bitte die Musik ___ machen?","answer":"leiser","english":"Could you please turn the music down?"},{"speaker":"B","german":"Entschuldigung, ich wusste nicht, dass sie so laut war.","blank":"Entschuldigung, ich ___ nicht, dass sie so laut war.","answer":"wusste","english":"Sorry, I didn't know it was so loud."}]},
+{"id":30,"level":"B1","theme":"Technik","dialogue":[{"speaker":"A","german":"Mein Laptop ist schon wieder abgestürzt.","blank":"Mein Laptop ist schon wieder ___.","answer":"abgestürzt","english":"My laptop has crashed again."},{"speaker":"B","german":"Hast du versucht, ihn neu zu starten?","blank":"Hast du versucht, ihn neu zu ___?","answer":"starten","english":"Have you tried restarting it?"}]},
+{"id":31,"level":"B1","theme":"Bank","dialogue":[{"speaker":"A","german":"Ich möchte ein Konto bei Ihrer Bank eröffnen.","blank":"Ich möchte ein Konto bei Ihrer Bank ___.","answer":"eröffnen","english":"I would like to open an account at your bank."},{"speaker":"B","german":"Dafür brauchen wir Ihren Ausweis und einen Nachweis Ihrer Adresse.","blank":"___ brauchen wir Ihren Ausweis und einen Nachweis Ihrer Adresse.","answer":"Dafür","english":"For that we need your ID and proof of your address."}]},
+{"id":32,"level":"B1","theme":"Sport","dialogue":[{"speaker":"A","german":"Obwohl es geregnet hat, sind wir joggen gegangen.","blank":"___ es geregnet hat, sind wir joggen gegangen.","answer":"Obwohl","english":"Although it rained, we went jogging."},{"speaker":"B","german":"Ihr seid wirklich sehr diszipliniert.","blank":"Ihr ___ wirklich sehr diszipliniert.","answer":"seid","english":"You are really very disciplined."}]},
+{"id":33,"level":"B1","theme":"Umzug","dialogue":[{"speaker":"A","german":"Wir ziehen nächsten Monat nach Hamburg um.","blank":"Wir ziehen nächsten Monat nach Hamburg ___.","answer":"um","english":"We're moving to Hamburg next month."},{"speaker":"B","german":"Habt ihr schon eine Firma für den Transport gefunden?","blank":"Habt ihr schon eine Firma für den Transport ___?","answer":"gefunden","english":"Have you already found a company for the move?"}]},
+{"id":34,"level":"B1","theme":"Im Büro","dialogue":[{"speaker":"A","german":"Die Besprechung wurde auf Donnerstag verschoben.","blank":"Die Besprechung ___ auf Donnerstag verschoben.","answer":"wurde","english":"The meeting was postponed to Thursday."},{"speaker":"B","german":"Gut, dann habe ich mehr Zeit für die Vorbereitung.","blank":"Gut, dann habe ich mehr Zeit für die ___.","answer":"Vorbereitung","english":"Good, then I have more time for the preparation."}]},
+{"id":35,"level":"B2","theme":"Wirtschaft","dialogue":[{"speaker":"A","german":"Die Zinsen wurden von der Zentralbank erneut gesenkt.","blank":"Die Zinsen ___ von der Zentralbank erneut gesenkt.","answer":"wurden","english":"Interest rates were lowered again by the central bank."},{"speaker":"B","german":"Dennoch bleibt die Nachfrage nach Krediten schwach.","blank":"___ bleibt die Nachfrage nach Krediten schwach.","answer":"Dennoch","english":"Nevertheless, demand for loans remains weak."}]},
+{"id":36,"level":"B2","theme":"Arbeitswelt","dialogue":[{"speaker":"A","german":"Wenn ich mehr Zeit hätte, würde ich eine Weiterbildung machen.","blank":"Wenn ich mehr Zeit hätte, ___ ich eine Weiterbildung machen.","answer":"würde","english":"If I had more time, I would do further training."},{"speaker":"B","german":"Das ließe sich bestimmt mit deinem Arbeitgeber vereinbaren.","blank":"Das ___ sich bestimmt mit deinem Arbeitgeber vereinbaren.","answer":"ließe","english":"That could surely be arranged with your employer."}]},
+{"id":37,"level":"B2","theme":"Medien","dialogue":[{"speaker":"A","german":"Die Studie wurde von mehreren Zeitungen falsch zitiert.","blank":"Die Studie wurde von mehreren Zeitungen falsch ___.","answer":"zitiert","english":"The study was misquoted by several newspapers."},{"speaker":"B","german":"Allerdings hat das Institut die Zahlen auch unklar dargestellt.","blank":"___ hat das Institut die Zahlen auch unklar dargestellt.","answer":"Allerdings","english":"However, the institute also presented the figures unclearly."}]},
+{"id":38,"level":"B2","theme":"Verhandlung","dialogue":[{"speaker":"A","german":"Wären Sie bereit, uns beim Preis entgegenzukommen?","blank":"___ Sie bereit, uns beim Preis entgegenzukommen?","answer":"Wären","english":"Would you be prepared to meet us halfway on the price?"},{"speaker":"B","german":"Das käme auf die Menge an, die Sie bestellen möchten.","blank":"Das ___ auf die Menge an, die Sie bestellen möchten.","answer":"käme","english":"That would depend on the quantity you'd like to order."}]},
+{"id":39,"level":"B2","theme":"Wissenschaft","dialogue":[{"speaker":"A","german":"Es wird angenommen, dass sich das Klima weiter erwärmt.","blank":"Es wird ___, dass sich das Klima weiter erwärmt.","answer":"angenommen","english":"It is assumed that the climate will continue to warm."},{"speaker":"B","german":"Umso wichtiger ist es, jetzt entschlossen zu handeln.","blank":"___ wichtiger ist es, jetzt entschlossen zu handeln.","answer":"Umso","english":"All the more important, then, to act decisively now."}]},
+{"id":40,"level":"B2","theme":"Arbeitswelt","dialogue":[{"speaker":"A","german":"Der Vertrag muss noch von der Geschäftsführung unterschrieben werden.","blank":"Der Vertrag muss noch von der Geschäftsführung unterschrieben ___.","answer":"werden","english":"The contract still has to be signed by the management."},{"speaker":"B","german":"Sobald das erledigt ist, schicken wir Ihnen eine Kopie zu.","blank":"___ das erledigt ist, schicken wir Ihnen eine Kopie zu.","answer":"Sobald","english":"As soon as that's done, we'll send you a copy."}]}
+]

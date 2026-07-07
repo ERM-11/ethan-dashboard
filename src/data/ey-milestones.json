@@ -1,0 +1,28 @@
+{
+  "startDate": "2026-09-01",
+  "weeklyHourTarget": 7,
+  "milestones": [
+    { "id": "3stmt", "title": "3-Statement Financial Model", "description": "Build a 3-statement model from a real UK annual report (income statement, balance sheet, cash flow linked)", "deadline": "2026-05-31", "category": "modelling" },
+    { "id": "anaplan", "title": "Anaplan Level 1 Certification", "description": "Complete Anaplan Level 1 Model Builder certification", "deadline": "2026-06-30", "category": "tools" },
+    { "id": "memo-apr", "title": "Client Memo — April", "description": "Structured client-style memo on a current UK financial services topic", "deadline": "2026-04-30", "category": "communication" },
+    { "id": "memo-may", "title": "Client Memo — May", "description": "Monthly client memo on a UK FS topic", "deadline": "2026-05-31", "category": "communication" },
+    { "id": "memo-jun", "title": "Client Memo — June", "description": "Monthly client memo on a UK FS topic", "deadline": "2026-06-30", "category": "communication" },
+    { "id": "memo-jul", "title": "Client Memo — July", "description": "Monthly client memo on a UK FS topic", "deadline": "2026-07-31", "category": "communication" },
+    { "id": "memo-aug", "title": "Client Memo — August", "description": "Monthly client memo on a UK FS topic", "deadline": "2026-08-31", "category": "communication" },
+    { "id": "mock-1", "title": "Mock Client Scenario 1", "description": "Biweekly timed mock: respond to a client brief with analysis and recommendations", "deadline": "2026-04-15", "category": "communication" },
+    { "id": "mock-2", "title": "Mock Client Scenario 2", "description": "Biweekly mock client scenario", "deadline": "2026-04-30", "category": "communication" },
+    { "id": "mock-3", "title": "Mock Client Scenario 3", "description": "Biweekly mock client scenario", "deadline": "2026-05-15", "category": "communication" },
+    { "id": "mock-4", "title": "Mock Client Scenario 4", "description": "Biweekly mock client scenario", "deadline": "2026-05-31", "category": "communication" },
+    { "id": "mock-5", "title": "Mock Client Scenario 5", "description": "Biweekly mock client scenario", "deadline": "2026-06-15", "category": "communication" },
+    { "id": "mock-6", "title": "Mock Client Scenario 6", "description": "Biweekly mock client scenario", "deadline": "2026-06-30", "category": "communication" },
+    { "id": "mock-7", "title": "Mock Client Scenario 7", "description": "Biweekly mock client scenario", "deadline": "2026-07-15", "category": "communication" },
+    { "id": "mock-8", "title": "Mock Client Scenario 8", "description": "Biweekly mock client scenario", "deadline": "2026-07-31", "category": "communication" },
+    { "id": "mock-9", "title": "Mock Client Scenario 9", "description": "Biweekly mock client scenario", "deadline": "2026-08-15", "category": "communication" },
+    { "id": "mock-10", "title": "Mock Client Scenario 10", "description": "Biweekly mock client scenario", "deadline": "2026-08-31", "category": "communication" },
+    { "id": "timed-build", "title": "Timed Model Build", "description": "Build a financial model under timed conditions to simulate real engagement pressure", "deadline": "2026-08-15", "category": "modelling" },
+    { "id": "cima-ba1", "title": "CIMA BA1 Confident", "description": "Reach 80%+ accuracy across all BA1 topics in the dashboard tracker", "deadline": "2026-08-31", "category": "cima" },
+    { "id": "cima-ba2", "title": "CIMA BA2 Confident", "description": "Reach 80%+ accuracy across all BA2 topics", "deadline": "2026-08-31", "category": "cima" },
+    { "id": "cima-ba3", "title": "CIMA BA3 Confident", "description": "Reach 80%+ accuracy across all BA3 topics", "deadline": "2026-08-31", "category": "cima" },
+    { "id": "cima-ba4", "title": "CIMA BA4 Confident", "description": "Reach 80%+ accuracy across all BA4 topics", "deadline": "2026-08-31", "category": "cima" }
+  ]
+}
