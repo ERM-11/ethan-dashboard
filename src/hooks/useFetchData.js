@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 // Shared fetch hook: one attempt per refresh cycle, interval refresh, cleanup on unmount.
 // Pass transform to parse non-JSON responses (e.g. RSS XML text).
-export default function useFetchData(url, refreshInterval, { transform, enabled = true } = {}) {
+// Pass fetcher to override how the Response is obtained (e.g. a CORS-proxy chain).
+export default function useFetchData(url, refreshInterval, { transform, enabled = true, fetcher } = {}) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -13,7 +14,7 @@ export default function useFetchData(url, refreshInterval, { transform, enabled 
     if (!enabled) return
     setError(null)
     try {
-      const res = await fetch(url)
+      const res = fetcher ? await fetcher(url) : await fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const body = transform ? await transform(res) : await res.json()
       if (!alive.current) return

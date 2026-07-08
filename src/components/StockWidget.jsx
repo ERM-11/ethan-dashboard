@@ -1,17 +1,17 @@
 import React, { useState, useCallback } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
-import { PROXY } from '../config.js'
+import { fetchViaProxy } from '../config.js'
 import { Card, Skeleton, ErrorState, Empty, focusRing, GhostBtn } from './ui.jsx'
 import { useEffect, useRef } from 'react'
 
 const DEFAULTS = ['NVDA', 'GOOGL', 'AMZN', 'AVGO', 'AMD', 'SOFI', 'PLTR', 'NVO']
 const RANGES = { '1D': ['1d', '5m'], '5D': ['5d', '15m'], '1M': ['1mo', '1d'], '3M': ['3mo', '1d'], '6M': ['6mo', '1d'], '1Y': ['1y', '1wk'] }
 
-const chartUrl = (t, range = '5d', interval = '1d') =>
-  PROXY(`https://query1.finance.yahoo.com/v8/finance/chart/${t}?range=${range}&interval=${interval}`)
+const yahooUrl = (t, range = '5d', interval = '1d') =>
+  `https://query1.finance.yahoo.com/v8/finance/chart/${t}?range=${range}&interval=${interval}`
 
 async function fetchQuote(ticker) {
-  const res = await fetch(chartUrl(ticker))
+  const res = await fetchViaProxy(yahooUrl(ticker))
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const j = await res.json()
   const r = j?.chart?.result?.[0]
@@ -46,7 +46,7 @@ function DetailChart({ ticker }) {
     setState({ loading: true })
     try {
       const [r, iv] = RANGES[rg]
-      const res = await fetch(chartUrl(ticker, r, iv))
+      const res = await fetchViaProxy(yahooUrl(ticker, r, iv))
       const j = await res.json()
       const result = j?.chart?.result?.[0]
       const ts = result?.timestamp ?? []

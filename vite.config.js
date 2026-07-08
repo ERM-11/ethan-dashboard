@@ -30,9 +30,14 @@ export default defineConfig({
             options: { cacheName: 'open-meteo', expiration: { maxAgeSeconds: 900 } }
           },
           {
-            urlPattern: /^https:\/\/api\.allorigins\.win\//,
+            urlPattern: /\/api\/proxy/,
             handler: 'NetworkFirst',
-            options: { cacheName: 'proxied', expiration: { maxAgeSeconds: 900 } }
+            options: { cacheName: 'api-proxy', networkTimeoutSeconds: 10, expiration: { maxAgeSeconds: 900 } }
+          },
+          {
+            urlPattern: /^https:\/\/(api\.allorigins\.win|api\.codetabs\.com|corsproxy\.io)\//,
+            handler: 'NetworkFirst',
+            options: { cacheName: 'proxied', networkTimeoutSeconds: 10, expiration: { maxAgeSeconds: 900 } }
           },
           {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,

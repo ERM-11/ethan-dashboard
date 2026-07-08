@@ -5,7 +5,37 @@ export const LOCATION = {
   name: 'Edinburgh'
 }
 
-export const PROXY = (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+// CORS proxies tried in order. Our own same-origin Vercel function (/api/proxy)
+// comes first — it has no CORS and no third-party dependency, so it's the reliable
+// path (the public proxies below are just belt-and-suspenders fallbacks).
+const PROXIES = [
+  (url) => `/api/proxy?url=${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+]
+
+// Fetch a URL through the proxy chain, returning the first OK Response.
+// Each attempt has its own timeout so a hung proxy can't stall the whole chain.
+export async function fetchViaProxy(targetUrl, { timeout = 8000 } = {}) {
+  let lastErr
+  for (const build of PROXIES) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeout)
+    try {
+      const res = await fetch(build(targetUrl), { signal: ctrl.signal, headers: { Accept: '*/*' } })
+      clearTimeout(timer)
+      if (res.ok) return res
+      lastErr = new Error(`HTTP ${res.status}`)
+    } catch (e) {
+      clearTimeout(timer)
+      lastErr = e
+    }
+  }
+  throw lastErr ?? new Error('all proxies failed')
+}
+
+// kept for compatibility — first proxy in the chain
+export const PROXY = PROXIES[0]
 
 // today's date as a local-time ISO string (YYYY-MM-DD) — never toISOString(), which is UTC
 export function todayISO(d = new Date()) {

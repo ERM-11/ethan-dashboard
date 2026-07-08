@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import useFetchData from '../hooks/useFetchData.js'
-import { PROXY } from '../config.js'
+import { fetchViaProxy } from '../config.js'
 import { Card, Skeleton, ErrorState, Chip, Empty, focusRing } from './ui.jsx'
 
 const FEED = 'https://feeds.bbci.co.uk/news/business/rss.xml'
@@ -25,7 +25,7 @@ async function parseRss(res) {
 }
 
 export default function NewsWidget() {
-  const { data, loading, error, refresh } = useFetchData(PROXY(FEED), 30 * 60 * 1000, { transform: parseRss })
+  const { data, loading, error, refresh } = useFetchData(FEED, 30 * 60 * 1000, { transform: parseRss, fetcher: fetchViaProxy })
   const [filter, setFilter] = useState('All')
   const [open, setOpen] = useState(null)
 
