@@ -1,4 +1,5 @@
 import React from 'react'
+import { Flower2 } from 'lucide-react'
 import useFetchData from '../hooks/useFetchData.js'
 import { LOCATION } from '../config.js'
 import { Card, Skeleton, ErrorState, Badge } from './ui.jsx'
@@ -23,7 +24,7 @@ function Row({ label, value, lvl, bold }) {
     <div className="flex items-center justify-between gap-2">
       <span className={`text-sm ${bold ? 'font-semibold' : ''}`}>{label}</span>
       <span className="flex items-center gap-2">
-        {value != null && <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tabular-nums">{Math.round(value)}</span>}
+        {value != null && <span className="num text-xs text-mut">{Math.round(value)}</span>}
         <Badge tone={TONES[lvl]}>{LEVELS[lvl]}</Badge>
       </span>
     </div>
@@ -42,22 +43,32 @@ export default function PollenWidget() {
   const overall = rows.length ? Math.max(...rows.map((r) => r.lvl)) : 0
 
   return (
-    <Card icon="🌾" title="Pollen">
-      {loading && <div className="flex flex-col gap-2">{Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-5" />)}</div>}
+    <Card icon={Flower2} title="Pollen">
+      {loading && (
+        // skeleton mirrors the label + badge rows
+        <div className="flex flex-col gap-2.5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between gap-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      )}
       {!loading && error && <ErrorState message={error} onRetry={refresh} />}
       {!loading && !error && cur && (
         <>
-          <div className="border-l-2 border-blue-500 pl-2">
+          <div className="border-l-2 border-line2 pl-2">
             <Row label="Tree pollen" lvl={treeLvl} bold />
           </div>
           <div className="flex flex-col gap-1.5">
             {rows.map((r) => <Row key={r.key} label={r.label} value={r.value} lvl={r.lvl} />)}
           </div>
-          <div className="border-t border-slate-300 dark:border-slate-700 pt-2">
+          <div className="border-t border-line pt-2">
             <Row label="Overall" lvl={overall} bold />
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400" aria-live="polite">
-            Last updated {lastUpdated?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · zero values out of season are normal
+          <p className="text-xs text-mut" aria-live="polite">
+            Last updated <span className="num">{lastUpdated?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span> · zero values out of season are normal
           </p>
         </>
       )}

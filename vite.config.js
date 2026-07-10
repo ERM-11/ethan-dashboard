@@ -30,9 +30,13 @@ export default defineConfig({
             options: { cacheName: 'open-meteo', expiration: { maxAgeSeconds: 900 } }
           },
           {
-            urlPattern: /\/api\/proxy/,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'api-proxy', networkTimeoutSeconds: 10, expiration: { maxAgeSeconds: 900 } }
+            // Live data endpoints must never be served from the service-worker
+            // cache. In a standalone (installed) PWA the SW sits in front of every
+            // request, and a cached /api/proxy response could shadow a fresh fetch —
+            // exactly the "added ticker doesn't load" symptom. NetworkOnly keeps the
+            // SW out of the way; fetchViaProxy already provides fallback + retry.
+            urlPattern: /\/api\//,
+            handler: 'NetworkOnly'
           },
           {
             urlPattern: /^https:\/\/(api\.allorigins\.win|api\.codetabs\.com|corsproxy\.io)\//,

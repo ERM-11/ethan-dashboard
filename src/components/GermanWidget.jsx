@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
+import { Languages } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import { todayISO, parseISO, mondayOf } from '../config.js'
-import { Card, PrimaryBtn, SecondaryBtn, GhostBtn, ProgressBar, focusRing } from './ui.jsx'
+import { Card, PrimaryBtn, SecondaryBtn, GhostBtn, ProgressBar, Segmented, focusRing, buzz, inputCls } from './ui.jsx'
 import exercises from '../data/german-exercises.json'
 
 const LEVELS = ['All', 'A2', 'B1', 'B2']
@@ -45,6 +46,7 @@ export default function GermanWidget() {
 
   const check = () => {
     if (!current || checked) return
+    buzz()
     setChecked(true)
     const allRight = current.dialogue.every((d, i) => (answers[i] ?? '').trim().toLowerCase() === d.answer.toLowerCase())
     if (!completed.includes(current.id)) setCompleted([...completed, current.id])
@@ -69,21 +71,14 @@ export default function GermanWidget() {
   const todayIdx = (new Date().getDay() + 6) % 7
 
   return (
-    <Card icon="🇩🇪" title="German Practice" right={
-      <div className="flex rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden text-xs">
-        {LEVELS.map((l) => (
-          <button key={l} onClick={() => switchLevel(l)}
-            className={`px-2 py-1.5 min-h-[32px] ${focusRing} ${level === l ? 'bg-blue-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-            {l}
-          </button>
-        ))}
-      </div>
+    <Card icon={Languages} title="German Practice" right={
+      <Segmented options={LEVELS} value={level} onChange={switchLevel} label="German level" />
     }>
       {!current ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">No exercises at this level yet</p>
+        <p className="text-sm text-mut py-4 text-center">No exercises at this level yet</p>
       ) : (
         <>
-          <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+          <p className="num text-xs text-mut">
             #{current.id} · {current.theme} · {current.level}
           </p>
           <div className="flex flex-col gap-2">
@@ -92,20 +87,20 @@ export default function GermanWidget() {
               return (
                 <div key={i} className="text-sm">
                   <p>
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 mr-1">{d.speaker}:</span>
+                    <span className="num text-xs text-mut mr-1">{d.speaker}:</span>
                     {checked ? d.german : d.blank}
                   </p>
                   {!checked ? (
                     <input value={answers[i] ?? ''} onChange={(e) => setAnswers({ ...answers, [i]: e.target.value })}
                       placeholder="missing word…" aria-label={`Answer for line ${i + 1}`}
-                      className={`mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-2 text-sm ${focusRing}`} />
+                      className={`mt-1 w-full ${inputCls()}`} />
                   ) : (
-                    <p className={`text-xs font-medium ${right ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    <p className={`text-xs font-medium ${right ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {right ? '✓ Correct' : `✗ You wrote "${answers[i] ?? ''}" — answer: "${d.answer}"`}
                     </p>
                   )}
                   <button onClick={() => setShowTrans({ ...showTrans, [i]: !showTrans[i] })}
-                    className={`text-[11px] text-slate-500 dark:text-slate-400 hover:text-blue-500 min-h-[24px] ${focusRing}`}>
+                    className={`text-xs text-mut hover:text-ink min-h-[24px] ${focusRing}`}>
                     {showTrans[i] ? d.english : 'Show translation'}
                   </button>
                 </div>
@@ -120,26 +115,26 @@ export default function GermanWidget() {
             {!checked && <GhostBtn onClick={() => startNew()}>Skip</GhostBtn>}
           </div>
           {!pool.some((e) => mistakes.includes(e.id)) && (
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 -mt-1">No mistakes to review yet</p>
+            <p className="text-xs text-mut -mt-1">No mistakes to review yet</p>
           )}
         </>
       )}
-      <div className="border-t border-slate-300 dark:border-slate-700 pt-2 flex flex-col gap-2">
+      <div className="border-t border-line pt-2 flex flex-col gap-2">
         <ProgressBar pct={pool.length ? (completedInPool / pool.length) * 100 : 0} label={`${completedInPool}/${pool.length}`} />
         <div className="flex items-center justify-between">
           <div className="flex gap-1" aria-label="This week's practice days">
             {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((lbl, i) => (
               <div key={i} title={week[i]}
-                className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-mono ${
+                className={`num w-5 h-5 rounded flex items-center justify-center text-xs ${
                   dates.includes(week[i])
-                    ? 'bg-emerald-400/20 border border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                } ${i === todayIdx ? 'ring-2 ring-blue-500' : ''}`}>
+                    ? 'bg-emerald-400/20 border border-emerald-500 text-emerald-400'
+                    : 'bg-card2 text-mut'
+                } ${i === todayIdx ? 'ring-2 ring-focus' : ''}`}>
                 {lbl}
               </div>
             ))}
           </div>
-          <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
+          <span className="num text-xs text-mut">
             {streak.current >= 7 ? '🔥 ' : ''}{streak.current} day streak · {stats.done ? Math.round((stats.correct / stats.done) * 100) : 0}% correct
           </span>
         </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Sunset } from 'lucide-react'
 import useFetchData from '../hooks/useFetchData.js'
 import { LOCATION } from '../config.js'
 import { Card, Skeleton, ErrorState } from './ui.jsx'
@@ -36,32 +37,32 @@ export default function SunsetWidget() {
       <>
         <svg viewBox="0 0 200 92" width="100%" role="img" aria-label={`Sun position: sunrise ${hm(d.sunrise[td])}, sunset ${hm(d.sunset[td])}`}>
           <path d="M 20 80 A 80 70 0 0 1 180 80" fill="none" strokeDasharray="4 4" strokeWidth="1.5"
-            className={up ? 'stroke-amber-400/60' : 'stroke-slate-400 dark:stroke-slate-600'} />
-          <line x1="8" y1="80" x2="192" y2="80" strokeWidth="1" className="stroke-slate-300 dark:stroke-slate-700" />
+            className={up ? 'stroke-amber-400/60' : 'stroke-line2'} />
+          <line x1="8" y1="80" x2="192" y2="80" strokeWidth="1" className="stroke-line2" />
           <circle cx={up ? sunX : frac === 0 ? 20 : 180} cy={up ? sunY : 86} r="7" fill="#fbbf24" opacity={up ? 1 : 0.4} />
-          <text x="20" y="91" textAnchor="middle" className="fill-slate-500 dark:fill-slate-400" style={{ font: '600 8px "JetBrains Mono", monospace' }}>{hm(d.sunrise[td])}</text>
-          <text x="180" y="91" textAnchor="middle" className="fill-slate-500 dark:fill-slate-400" style={{ font: '600 8px "JetBrains Mono", monospace' }}>{hm(d.sunset[td])}</text>
+          <text x="20" y="91" textAnchor="middle" className="fill-mut" style={{ font: '600 8px "JetBrains Mono", monospace' }}>{hm(d.sunrise[td])}</text>
+          <text x="180" y="91" textAnchor="middle" className="fill-mut" style={{ font: '600 8px "JetBrains Mono", monospace' }}>{hm(d.sunset[td])}</text>
         </svg>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
-            <p className="font-mono text-sm font-bold tabular-nums">{mins(d.daylight_duration[td])}</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Daylight</p>
+            <p className="num text-sm font-bold">{mins(d.daylight_duration[td])}</p>
+            <p className="text-xs text-mut">Daylight</p>
           </div>
           <div>
-            <p className={`font-mono text-sm font-bold tabular-nums ${delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            <p className="num text-sm font-bold">
               {delta >= 0 ? '▲ +' : '▼ −'}{Math.abs(delta)}m
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">vs yesterday</p>
+            <p className="text-xs text-mut">vs yesterday</p>
           </div>
           <div>
-            <p className="font-mono text-sm font-bold tabular-nums">
+            <p className="num text-sm font-bold">
               {new Date(set.getTime() - 3600000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
             </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Golden hr</p>
+            <p className="text-xs text-mut">Golden hr</p>
           </div>
         </div>
         {tm !== null && (
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono text-center">
+          <p className="num text-xs text-mut text-center">
             Tomorrow: ↑ {hm(d.sunrise[tm])} ↓ {hm(d.sunset[tm])}
           </p>
         )}
@@ -70,8 +71,21 @@ export default function SunsetWidget() {
   }
 
   return (
-    <Card icon="🌇" title="Sunset">
-      {loading && <Skeleton className="h-32" />}
+    <Card icon={Sunset} title="Sunset">
+      {loading && (
+        // skeleton mirrors the arc + three stat columns
+        <>
+          <Skeleton className="h-[92px] rounded-xl" />
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-1">
+                <Skeleton className="h-4 w-14" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
       {!loading && error && <ErrorState message={error} onRetry={refresh} />}
       {!loading && !error && body}
     </Card>

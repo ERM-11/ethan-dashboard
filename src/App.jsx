@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
+import { ChevronUp, ChevronDown, Moon, Eclipse } from 'lucide-react'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
-import { focusRing, GhostBtn } from './components/ui.jsx'
+import { focusRing, press, GhostBtn } from './components/ui.jsx'
 import WeatherWidget from './components/WeatherWidget.jsx'
 import PollenWidget from './components/PollenWidget.jsx'
 import SunsetWidget from './components/SunsetWidget.jsx'
@@ -25,6 +26,8 @@ const WIDGETS = {
 }
 const DEFAULT_ORDER = ['weather', 'pollen', 'sunset', 'stocks', 'news', 'word', 'cima', 'german', 'ey']
 
+const THEME_COLOR = { slate: '#0f172a', amoled: '#000000' }
+
 function Clock() {
   const [now, setNow] = useState(new Date())
   useEffect(() => {
@@ -32,7 +35,7 @@ function Clock() {
     return () => clearInterval(id)
   }, [])
   return (
-    <span className="font-mono text-xs sm:text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+    <span className="num text-xs text-mut">
       {now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}{' '}
       {now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
     </span>
@@ -40,13 +43,16 @@ function Clock() {
 }
 
 export default function App() {
-  const [dark, setDark] = useLocalStorage('dashboard_darkMode', true)
+  const [theme, setTheme] = useLocalStorage('dashboard_theme', 'slate')
   const [order, setOrder] = useLocalStorage('dashboard_widgetOrder', DEFAULT_ORDER)
   const [editing, setEditing] = useState(false)
 
+  // apply theme to <html> and keep the PWA chrome colour in sync
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-  }, [dark])
+    const t = theme === 'amoled' ? 'amoled' : 'slate'
+    document.documentElement.dataset.theme = t
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[t])
+  }, [theme])
 
   // heal saved order: drop unknown ids, append any new widgets
   const ids = order.filter((id) => WIDGETS[id]).concat(DEFAULT_ORDER.filter((id) => !order.includes(id)))
@@ -60,21 +66,21 @@ export default function App() {
     setOrder(next)
   }
 
+  const amoled = theme === 'amoled'
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans transition-colors">
+    <div className="min-h-screen bg-bg text-ink font-sans transition-colors">
       <header className="max-w-grid mx-auto flex items-center justify-between gap-3 px-4 pt-5 pb-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl">Ethan's Dashboard</h1>
+        <h1 className="font-display font-bold text-xl">Ethan's Dashboard</h1>
         <div className="flex items-center gap-2 sm:gap-3">
           <Clock />
-          <GhostBtn onClick={() => setEditing(!editing)} className="min-h-[44px]">
-            {editing ? 'Done' : 'Edit layout'}
-          </GhostBtn>
+          <GhostBtn onClick={() => setEditing(!editing)}>{editing ? 'Done' : 'Edit layout'}</GhostBtn>
           <button
-            onClick={() => setDark(!dark)}
-            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={`min-w-[44px] min-h-[44px] rounded-lg border border-slate-300 dark:border-slate-600 text-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 ${focusRing}`}
+            onClick={() => setTheme(amoled ? 'slate' : 'amoled')}
+            aria-label={amoled ? 'Switch to slate theme' : 'Switch to pure-black theme'}
+            title={amoled ? 'Slate theme' : 'Pure-black theme'}
+            className={`min-w-[44px] min-h-[44px] rounded-lg border border-line2 text-mut hover:text-ink hover:bg-veil inline-flex items-center justify-center ${press} ${focusRing}`}
           >
-            {dark ? '☀️' : '🌙'}
+            {amoled ? <Moon size={18} aria-hidden="true" /> : <Eclipse size={18} aria-hidden="true" />}
           </button>
         </div>
       </header>
@@ -86,9 +92,15 @@ export default function App() {
           return (
             <div key={id} className={`relative min-w-0 ${w.span ? 'sm:col-span-2 lg:col-span-2' : ''}`}>
               {editing && (
-                <div className="absolute -top-2 right-2 z-10 flex gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow px-1">
-                  <button aria-label={`Move ${w.name} earlier`} onClick={() => move(id, -1)} className={`min-w-[44px] min-h-[44px] ${focusRing}`}>↑</button>
-                  <button aria-label={`Move ${w.name} later`} onClick={() => move(id, 1)} className={`min-w-[44px] min-h-[44px] ${focusRing}`}>↓</button>
+                <div className="absolute -top-2 right-2 z-10 flex gap-1 bg-card2 border border-line2 rounded-lg px-1">
+                  <button aria-label={`Move ${w.name} earlier`} onClick={() => move(id, -1)}
+                    className={`min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-mut hover:text-ink ${press} ${focusRing}`}>
+                    <ChevronUp size={18} aria-hidden="true" />
+                  </button>
+                  <button aria-label={`Move ${w.name} later`} onClick={() => move(id, 1)}
+                    className={`min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-mut hover:text-ink ${press} ${focusRing}`}>
+                    <ChevronDown size={18} aria-hidden="true" />
+                  </button>
                 </div>
               )}
               <ErrorBoundary name={w.name}>

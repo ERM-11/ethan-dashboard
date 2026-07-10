@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
+import { BookOpen } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import { dayOfYear, todayISO } from '../config.js'
-import { Card, PrimaryBtn, SecondaryBtn, focusRing } from './ui.jsx'
+import { Card, PrimaryBtn, SecondaryBtn, Segmented, buzz, inputCls } from './ui.jsx'
 import vocab from '../data/vocabulary.json'
 
 export default function WordWidget() {
@@ -16,66 +17,62 @@ export default function WordWidget() {
   const voted = voteDate === todayISO()
   const vote = (key) => {
     if (voted) return
+    buzz()
     setStats({ ...stats, [key]: stats[key] + 1 })
     setVoteDate(todayISO())
   }
   const correct = guess.trim().toLowerCase() === word.word.toLowerCase()
   const reveal = () => {
     if (revealed) return
+    buzz()
     setRevealed(true)
     setQuizStats({ quizAttempts: quizStats.quizAttempts + 1, quizCorrect: quizStats.quizCorrect + (correct ? 1 : 0) })
   }
   const blanked = (s) => s.replace(new RegExp(word.word, 'gi'), '______')
 
   return (
-    <Card icon="📖" title="Word of the Day" right={
-      <div className="flex rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden text-xs">
-        {['learn', 'quiz'].map((m) => (
-          <button key={m} onClick={() => { setMode(m); setRevealed(false); setGuess('') }}
-            className={`px-3 py-1.5 min-h-[32px] capitalize ${focusRing} ${mode === m ? 'bg-blue-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-            {m}
-          </button>
-        ))}
-      </div>
+    <Card icon={BookOpen} title="Word of the Day" right={
+      <Segmented options={['learn', 'quiz']} value={mode} label="Word mode"
+        onChange={(m) => { setMode(m); setRevealed(false); setGuess('') }} />
     }>
       {mode === 'learn' || revealed ? (
         <div>
           <p className="font-display text-2xl font-bold">{word.word}</p>
-          <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{word.pronunciation} · {word.partOfSpeech}</p>
+          <p className="num text-xs text-mut">{word.pronunciation} · {word.partOfSpeech}</p>
         </div>
       ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Guess the word from its definition:</p>
+        <p className="text-sm text-mut">Guess the word from its definition:</p>
       )}
       <p className="text-sm">{mode === 'quiz' && !revealed ? blanked(word.definition) : word.definition}</p>
-      <p className="text-sm italic text-slate-600 dark:text-slate-300">"{mode === 'quiz' && !revealed ? blanked(word.example) : word.example}"</p>
+      <p className="text-sm italic text-mut">"{mode === 'quiz' && !revealed ? blanked(word.example) : word.example}"</p>
 
       {mode === 'quiz' && (
         <>
           {!revealed ? (
             <form onSubmit={(e) => { e.preventDefault(); reveal() }} className="flex gap-2">
               <input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="Your guess…" aria-label="Your guess"
-                className={`flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-2 text-sm ${focusRing}`} />
+                className={`flex-1 min-w-0 ${inputCls()}`} />
               <PrimaryBtn onClick={reveal}>Reveal</PrimaryBtn>
             </form>
           ) : (
-            <p className={`text-sm font-medium ${correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} role="status">
+            <p className={`text-sm font-medium ${correct ? 'text-emerald-400' : 'text-rose-400'}`} role="status">
               {correct ? '✓ Correct' : `✗ Not quite — the answer is "${word.word}"`}
             </p>
           )}
-          <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          <p className="num text-xs text-mut">
             Quiz accuracy: {quizStats.quizAttempts ? Math.round((quizStats.quizCorrect / quizStats.quizAttempts) * 100) : 0}% ({quizStats.quizCorrect}/{quizStats.quizAttempts})
           </p>
         </>
       )}
 
-      <div className="flex items-center gap-2 border-t border-slate-300 dark:border-slate-700 pt-2">
+      <div className="flex items-center gap-2 border-t border-line pt-2">
         <SecondaryBtn onClick={() => vote('known')} ariaDisabled={voted}>I knew this one</SecondaryBtn>
         <SecondaryBtn onClick={() => vote('new')} ariaDisabled={voted}>New to me</SecondaryBtn>
-        <span className="ml-auto font-mono text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
+        <span className="num ml-auto text-xs text-mut">
           {stats.known} known · {stats.new} new
         </span>
       </div>
-      {voted && <p className="text-[11px] text-slate-500 dark:text-slate-400">Done for today ✓</p>}
+      {voted && <p className="text-xs text-mut">Done for today ✓</p>}
     </Card>
   )
 }

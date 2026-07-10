@@ -2,8 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-html { background: #f8fafc; }
-html.dark { background: #0f172a; }
+/* Theme surfaces. Two dark themes share one component vocabulary:
+   slate (default) and amoled (true black for OLED). Toggled via
+   data-theme on <html>, persisted to localStorage dashboard_theme. */
+:root,
+html[data-theme='slate'] {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card2: #283548;
+  --line: rgba(148, 163, 184, 0.16);
+  --line2: rgba(148, 163, 184, 0.35);
+  --veil: rgba(148, 163, 184, 0.1);
+  --ink: #e2e8f0;
+  --mut: #94a3b8;
+  --focus: #cbd5e1;
+}
+html[data-theme='amoled'] {
+  --bg: #000000;
+  --card: #0b0d13;
+  --card2: #161923;
+  --line: rgba(148, 163, 184, 0.14);
+  --line2: rgba(148, 163, 184, 0.32);
+  --veil: rgba(148, 163, 184, 0.09);
+  --ink: #e5e8ee;
+  --mut: #8d97a9;
+  --focus: #cbd5e1;
+}
+
+html {
+  background: var(--bg);
+}
 
 #root {
   padding-top: max(env(safe-area-inset-top), 0px);
@@ -17,6 +45,40 @@ html.dark { background: #0f172a; }
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Every digit on the dashboard renders in this class — JetBrains Mono,
+   tabular so columns of figures align. No digits in DM Sans / Space Grotesk. */
+.num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tap feedback: brief scale-down while pressed. */
+.press {
+  transition: transform 100ms ease-out;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* Skeleton shimmer — a moving highlight over a card2 block. Skeletons are
+   shaped like the content they replace (see per-widget loading states). */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--card2);
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.07), transparent);
+  animation: shimmer 1.6s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
 }
 
 /* hidden scrollbars for horizontal scrollers, overflow shown via mask */
