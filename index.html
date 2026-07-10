@@ -13,7 +13,9 @@
   <link rel="icon" href="/icons/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- JetBrains Mono is self-hosted (see @font-face in src/index.css) so its slashed-zero
+       OpenType feature survives; Google Fonts serves it with GSUB stripped. -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script>
     // apply saved theme before paint to avoid a flash; keep the PWA chrome colour in sync
     try {

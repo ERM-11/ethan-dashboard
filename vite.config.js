@@ -23,6 +23,9 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // default globPatterns omit woff2; include it so the self-hosted
+        // JetBrains Mono files are precached and the PWA renders offline.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/(api|air-quality-api)\.open-meteo\.com\//,
