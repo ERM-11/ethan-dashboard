@@ -2,20 +2,9 @@ import React, { useState } from 'react'
 import { CloudSun } from 'lucide-react'
 import useFetchData from '../hooks/useFetchData.js'
 import { LOCATION } from '../config.js'
-import { Card, Skeleton, ErrorState, focusRing, press } from './ui.jsx'
+import { Card, Skeleton, ErrorState, WeatherIcon, weatherLabel, focusRing, press } from './ui.jsx'
 
-const WMO = [
-  [0, '☀️'], [1, '🌤️'], [2, '⛅'], [3, '☁️'], [45, '🌫️'], [48, '🌫️'],
-  [51, '🌦️'], [55, '🌧️'], [61, '🌦️'], [63, '🌧️'], [65, '🌧️'], [71, '🌨️'],
-  [75, '❄️'], [80, '🌦️'], [82, '⛈️'], [95, '⛈️'], [99, '⛈️']
-]
-const icon = (code) => {
-  let best = '☁️'
-  for (const [c, e] of WMO) if (code >= c) best = e
-  return best
-}
-
-const URL = `https://api.open-meteo.com/v1/forecast?latitude=${LOCATION.latitude}&longitude=${LOCATION.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=${encodeURIComponent(LOCATION.timezone)}`
+const URL = `https://api.open-meteo.com/v1/forecast?latitude=${LOCATION.latitude}&longitude=${LOCATION.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=${encodeURIComponent(LOCATION.timezone)}`
 
 export default function WeatherWidget() {
   const { data, loading, error, lastUpdated, refresh } = useFetchData(URL, 15 * 60 * 1000)
@@ -24,40 +13,53 @@ export default function WeatherWidget() {
   return (
     <Card icon={CloudSun} title={`${LOCATION.name} Weather`}>
       {loading && (
-        // skeleton mirrors the 7-day tile grid
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-          {Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-[74px]" />)}
+        // skeleton mirrors the 7-across scrollable day strip
+        <div className="scroller flex gap-1.5 -mx-4 px-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-[96px] w-16 shrink-0 rounded-lg" />
+          ))}
         </div>
       )}
       {!loading && error && <ErrorState message={error} onRetry={refresh} />}
       {!loading && !error && data?.daily && (
         <>
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+          <div className="scroller flex gap-1.5 -mx-4 px-4" aria-label="7-day forecast">
             {data.daily.time.map((d, i) => {
               const day = new Date(d + 'T00:00:00')
               const active = openDay === i
+              const code = data.daily.weather_code[i]
+              const hi = Math.round(data.daily.temperature_2m_max[i])
+              const lo = Math.round(data.daily.temperature_2m_min[i])
+              const precip = data.daily.precipitation_probability_max?.[i]
+              const dayLabel = i === 0 ? 'Today' : day.toLocaleDateString('en-GB', { weekday: 'long' })
               return (
                 <button
                   key={d}
                   onClick={() => setOpenDay(active ? null : i)}
                   aria-expanded={active}
-                  className={`flex flex-col items-center gap-0.5 rounded-lg border p-1.5 min-h-[44px] text-center transition-colors ${press} ${focusRing} ${
+                  aria-label={`${dayLabel}, ${weatherLabel(code)}, high ${hi}°, low ${lo}°${precip != null ? `, ${precip}% chance of rain` : ''}`}
+                  className={`flex flex-col items-center gap-1 shrink-0 w-16 rounded-lg border p-2 min-h-[44px] text-center transition-colors ${press} ${focusRing} ${
                     active ? 'border-line2 bg-card2' : 'border-line hover:bg-veil'
                   }`}
                 >
                   <span className="text-xs font-medium text-mut">
                     {i === 0 ? 'Today' : day.toLocaleDateString('en-GB', { weekday: 'short' })}
                   </span>
-                  <span className="text-xl leading-none" aria-hidden="true">{icon(data.daily.weather_code[i])}</span>
+                  <WeatherIcon code={code} size={20} className="text-ink" />
                   <span className="num text-xs">
-                    {Math.round(data.daily.temperature_2m_max[i])}° <span className="text-mut">{Math.round(data.daily.temperature_2m_min[i])}°</span>
+                    {hi}° <span className="text-mut">{lo}°</span>
                   </span>
+                  <div className="h-[3px] w-full rounded bg-card2" aria-hidden="true">
+                    {precip != null && precip >= 10 && (
+                      <div className="h-full rounded bg-mut" style={{ width: `${precip}%` }} />
+                    )}
+                  </div>
                 </button>
               )
             })}
           </div>
           {openDay !== null && data.hourly && (
-            <div className="scroller flex gap-2 pt-1" aria-label="Hourly forecast">
+            <div className="scroller flex gap-2 -mx-4 px-4 pt-1" aria-label="Hourly forecast">
               {data.hourly.time
                 .map((t, i) => ({ t, i }))
                 .filter(({ t }) => t.startsWith(data.daily.time[openDay]))
@@ -67,7 +69,7 @@ export default function WeatherWidget() {
                   return (
                     <div key={t} className="flex flex-col items-center gap-0.5 shrink-0 w-11">
                       <span className="num text-xs text-mut">{t.slice(11, 16)}</span>
-                      <span aria-hidden="true">{icon(data.hourly.weather_code[i])}</span>
+                      <WeatherIcon code={data.hourly.weather_code[i]} size={16} className="text-ink" />
                       <span className="num text-xs">{Math.round(data.hourly.temperature_2m[i])}°</span>
                       <div className="h-[3px] w-8 rounded bg-card2" aria-hidden="true">
                         {p >= 10 && <div className="h-full rounded bg-mut" style={{ width: `${p}%` }} />}

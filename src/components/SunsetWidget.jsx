@@ -9,7 +9,10 @@ const GOLD = '#f0b429'
 
 // One fetch feeds both sections: daily sun times (arc, with past_days=1 for the
 // vs-yesterday delta) and hourly cloud/humidity for the 5-day quality forecast.
+// Exported (as SUNSET_URL, with calcSunsetScore/findHourlyIndex below) for the
+// header BriefingStrip's best-sunset chip — keep these exports intact.
 const URL = `https://api.open-meteo.com/v1/forecast?latitude=${LOCATION.latitude}&longitude=${LOCATION.longitude}&daily=sunrise,sunset,daylight_duration&hourly=cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m,precipitation_probability,visibility&timezone=${encodeURIComponent(LOCATION.timezone)}&past_days=1&forecast_days=5`
+export { URL as SUNSET_URL }
 
 const hm = (iso) => iso.slice(11, 16)
 const mins = (s) => `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`
@@ -31,7 +34,7 @@ const mins = (s) => `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`
  * Raw range [−45, +55] shifted by +45 → [0, 100], clamped. Clear skies land
  * mid-scale; heavy low cloud or near-total overcast kill the score.
  */
-function calcSunsetScore(cloudMid, cloudHigh, cloudLow, humidity, precipProb, visibilityM) {
+export function calcSunsetScore(cloudMid, cloudHigh, cloudLow, humidity, precipProb, visibilityM) {
   const midScore = Math.exp(-Math.pow(cloudMid - 40, 2) / (2 * Math.pow(20, 2)))
   let raw = 35.0 * midScore
   raw += 20.0 * (cloudHigh / 100.0)
@@ -54,7 +57,7 @@ function scoreLabel(score) {
 }
 
 // Index of the hourly sample at the day's sunset hour (matched by date + hour).
-function findHourlyIndex(hourlyTimes, sunsetISO) {
+export function findHourlyIndex(hourlyTimes, sunsetISO) {
   if (!sunsetISO || !hourlyTimes?.length) return -1
   const sunsetHour = parseInt(sunsetISO.slice(11, 13), 10)
   const sunsetDate = sunsetISO.slice(0, 10)
@@ -131,7 +134,7 @@ export default function SunsetWidget() {
     const delta = Math.round((d.daylight_duration[td] - d.daylight_duration[yd]) / 60)
 
     arc = (
-      <>
+      <div className="flex flex-col gap-1.5">
         <svg viewBox="0 0 200 92" width="100%" role="img" aria-label={`Sun position: sunrise ${hm(d.sunrise[td])}, sunset ${hm(d.sunset[td])}`}>
           <path d="M 20 80 A 80 70 0 0 1 180 80" fill="none" strokeDasharray="4 4" strokeWidth="1.5"
             className={up ? 'stroke-amber-400/60' : 'stroke-line2'} />
@@ -163,7 +166,7 @@ export default function SunsetWidget() {
             Tomorrow: ↑ {hm(d.sunrise[tm])} ↓ {hm(d.sunset[tm])}
           </p>
         )}
-      </>
+      </div>
     )
   }
 
@@ -195,16 +198,18 @@ export default function SunsetWidget() {
       {loading && (
         // skeleton mirrors the arc + three stat columns + the 5-ring forecast row
         <>
-          <Skeleton className="h-[92px] rounded-xl" />
-          <div className="grid grid-cols-3 gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <Skeleton className="h-4 w-14" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            ))}
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-[92px] rounded-xl" />
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <Skeleton className="h-4 w-14" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="border-t border-line pt-3 grid grid-cols-5 gap-1.5">
+          <div className="border-t border-line pt-2 grid grid-cols-5 gap-1.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5">
                 <Skeleton className="h-[46px] w-[46px] rounded-full" />
@@ -219,7 +224,7 @@ export default function SunsetWidget() {
         <>
           {arc}
           {quality.length > 0 && (
-            <div className="border-t border-line pt-3 flex flex-col gap-2">
+            <div className="border-t border-line pt-2 flex flex-col gap-1.5">
               <p className="text-xs text-mut">Sunset quality · next <span className="num">5</span> days</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {quality.map((day, i) => (
