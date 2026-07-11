@@ -1,8 +1,8 @@
 # DASHBOARD_AUDIT.md
 
-Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`); **updated 2026-07-11 after the visual-overhaul round** (BriefingStrip, WeatherIcon, entrance animation, ambience, per-widget polish — see per-section notes). Section numbers are a contract — other prompts reference them by number.
+Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`); **updated 2026-07-11 after the visual-overhaul round** (BriefingStrip, WeatherIcon, entrance animation, ambience, per-widget polish — see per-section notes); **updated again 2026-07-11 after the heatmap + backup round** (Study Activity widget, Edit-layout Export/Import — §2, §3, §4, §6 notes). Section numbers are a contract — other prompts reference them by number.
 
-Build verified: `npm run build` exit code **0** (Vite 5.4.21, 1807 modules, PWA precache 14 entries / 807.13 KiB). `vite preview` responds **200** on `/`.
+Build verified: `npm run build` exit code **0** (Vite 5.4.21, 1810 modules, PWA precache 14 entries / 815.10 KiB). `vite preview` responds **200** on `/`.
 
 ## 1. Tech Stack
 
@@ -42,6 +42,9 @@ dashboard/                      ← git repo root (remote "github")
     ├── hooks/
     │   ├── useFetchData.js     shared fetch hook (interval refresh, transform, custom fetcher)
     │   └── useLocalStorage.js  JSON get/set with functional updates
+    ├── lib/                    pure JSX-free modules (node-testable)
+    │   ├── backup.js           export/validate/apply for dashboard_ key backups (all-or-nothing)
+    │   └── studyActivity.js    heatmap grid + intensity logic for StudyActivityWidget
     ├── data/
     │   ├── vocabulary.json         279 words
     │   ├── german-exercises.json   140 exercises
@@ -59,14 +62,17 @@ dashboard/                      ← git repo root (remote "github")
         ├── WordWidget.jsx      word of the day, learn/quiz modes
         ├── GermanWidget.jsx    fill-the-blank dialogues, streak + week calendar
         ├── CimaWidget.jsx      4-module MCQ bank, spaced repetition, daily challenge
-        └── EyWidget.jsx        countdown, milestone checklist, weekly hours log
+        ├── EyWidget.jsx        countdown, milestone checklist, weekly hours log
+        └── StudyActivityWidget.jsx  12-week contribution heatmap over stored study data
 ```
 
 The prompt library (boot prompt, task prompts) lives one level **above** the repo root in `dashboard artifacts/` and is not committed here.
 
 ## 3. Widget Inventory
 
-Order/config lives in `App.jsx` `WIDGETS` map; default order: weather, pollen, sunset, stocks, news, word, cima, german, ey. Only CIMA spans 2 columns (`sm:col-span-2 lg:col-span-2`). All widgets are self-contained (useState/useLocalStorage), wrapped in `ErrorBoundary`.
+Order/config lives in `App.jsx` `WIDGETS` map; default order: weather, pollen, sunset, stocks, news, word, cima, german, ey, study. Only CIMA spans 2 columns (`sm:col-span-2 lg:col-span-2`). All widgets are self-contained (useState/useLocalStorage), wrapped in `ErrorBoundary`.
+
+Edit-layout mode (header "Edit layout") additionally shows an **Export data / Import data** bar: export downloads every `dashboard_` key as `dashboard-backup-YYYY-MM-DD.json` (raw string values); import validates the whole file (only `dashboard_` keys, parseable values), shows an inline confirm (key count + export date), applies all-or-nothing via `src/lib/backup.js` (snapshot rollback), then reloads the page. Pending import state clears when leaving edit mode.
 
 App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the **BriefingStrip** (`BriefingStrip.jsx`, own ErrorBoundary, *not* in `dashboard_widgetOrder`) — a `.scroller` row of ≥44px chips (EY days-to-start from `ey-milestones.json`, CIMA + German streaks from their localStorage keys, best sunset day via SunsetWidget's exported `SUNSET_URL`/`calcSunsetScore`/`findHourlyIndex`, top watchlist mover via StockWidget's exported `fetchQuote`/`STOCK_DEFAULTS`; reads only, one fetch per page load, chips skeleton then drop on error, tap scrolls to `widget-<id>` anchors) — then the grid. Grid wrappers carry `id="widget-<id>"`, `scroll-mt-4`, and the `.card-enter` entrance animation staggered by `--enter-i` (see §5).
 
@@ -130,12 +136,21 @@ App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the *
 - **Interactions:** filter chips, milestone toggle (haptic), show-all toggle, hours form.
 - **Notes:** EY category colours (cyan/pink/indigo + slate for cima) are the non-overlapping reserved set. `showAll` and `hoursInput` are session-only (not persisted) by design.
 
+### StudyActivityWidget (`src/components/StudyActivityWidget.jsx`)
+- **Displays:** GitHub-style contribution grid of the last 12 weeks (Mon-first columns, one 10-unit cell per day, M/W/F row labels) as a single responsive SVG; inline summary line below (default: active-day count; selected: date + activity breakdown); Less→More legend row.
+- **Data:** reads `dashboard_cima_dailyCompleted` (modules completed per day), `dashboard_germanDates`, `dashboard_wordVoteDate` — read-only, parsed defensively (corrupt values ignored). Grid/intensity logic in `src/lib/studyActivity.js`. Intensity = cima modules + german + word (capped at 4): four opacity steps of the neutral `ink` token (0.22/0.45/0.7/1); empty days `card2`; future days of the current week not rendered. Deliberately **not** emerald (colour policy — no new accents).
+- **localStorage:** none written.
+- **Interactions:** day cells are far below the 44px minimum, so the grid is **one** interactive surface — taps delegate from the `<svg>` (data-iso on rects), arrow keys move the selection when focused (`focusRing` on the svg), selected cell gets a `--focus` stroke; summary is inline (`aria-live="polite"`), never a tooltip.
+- **Notes:** no fetch, no skeleton (synchronous localStorage read); renders sanely on a fresh install (all-`card2` grid, "0 active days" line).
+
 ## 4. Shared Utilities
 
 - **`src/config.js`** — `LOCATION` (Edinburgh 55.9533, −3.1883, Europe/London); `PROXIES` chain and `fetchViaProxy(url, {timeout=8000})`: tries `/api/proxy?url=` (same-origin Vercel function) → `api.allorigins.win` → `corsproxy.io`, each attempt with its own AbortController timeout, first OK response wins; `PROXY` (legacy export = first proxy); date helpers `todayISO` (local, never `toISOString`), `parseISO` (local midnight), `dayOfYear`, `mondayOf` (Mon-first).
 - **`api/proxy.js`** — Vercel serverless function; host-allowlist (`feeds.bbci.co.uk`, `www.theguardian.com`, `query1/query2.finance.yahoo.com`), 9-s upstream timeout, browser-like UA, passes upstream status/content-type, `s-maxage=120, stale-while-revalidate=600` edge caching.
 - **`src/hooks/useFetchData.js`** — `{data, loading, error, lastUpdated, refresh}`; optional `transform` (e.g. RSS→JSON), `fetcher` (proxy chain), `refreshInterval`, `enabled`; alive-ref guard against post-unmount setState.
 - **`src/hooks/useLocalStorage.js`** — JSON parse/stringify with try/catch, functional updates supported.
+- **`src/lib/backup.js`** — pure backup logic for App.jsx's Edit-layout Export/Import: `collectBackup` (every `dashboard_` key, values as raw JSON strings for byte-for-byte round-trips), `validateBackup` (whole-file validation before any write), `applyBackup` (all-or-nothing with snapshot rollback, removes keys it added on failure), `backupFilename`. Never reads or writes non-`dashboard_` keys.
+- **`src/lib/studyActivity.js`** — pure heatmap logic: `readActivity` (defensive multi-key read), `activityTotal`/`intensityLevel` (4 steps, capped), `LEVEL_OPACITY`, `buildGrid` (12 Mon-first week columns, local-time maths, future flags). Both lib modules are JSX-free so they can be exercised in node.
 - **`src/components/ui.jsx`** — all shared primitives (list in §2) plus `focusRing`, `press`, `buzz()` haptic.
 - **CORS:** Open-Meteo called directly (has CORS); BBC RSS and Yahoo Finance always via the proxy chain. Service worker: `/api/` is **NetworkOnly** (never cached — a cached proxy response once shadowed fresh ticker fetches); Open-Meteo and public proxies NetworkFirst (15 min), Google Fonts CacheFirst (30 days).
 - **Error handling:** per-widget `ErrorBoundary` (crash → message + "Reload widget"); fetch errors → shared `ErrorState` with Retry; StockWidget degrades per-ticker ("no data") and only shows the error state when nothing loads; ticker add distinguishes invalid symbol vs network failure.
@@ -186,6 +201,8 @@ useState + two custom hooks only — no Context/Redux/reducers. Nothing is share
 
 **Retired:** `dashboard_darkMode` — no longer read; never delete or repurpose.
 
+**Heatmap + backup round (2026-07-11): no new keys.** Study Activity reads `dashboard_cima_dailyCompleted` / `dashboard_germanDates` / `dashboard_wordVoteDate` and writes nothing (`dashboard_widgetOrder` gains the `study` id via the existing healing append). Export/Import covers every `dashboard_`-prefixed key by prefix scan — raw string values, whole-file validation, all-or-nothing apply — so new keys are automatically included in backups.
+
 ## 7. Data Files
 
 All parsed and counted directly from the JSON on 2026-07-11:
@@ -200,7 +217,7 @@ All parsed and counted directly from the JSON on 2026-07-11:
 - **Build/dev:** clean — build exit 0, no warnings beyond none; dev 200. No console errors observable without a browser (see USER VERIFY).
 - **Public proxy fallbacks are best-effort:** `api.allorigins.win` and `corsproxy.io` are third-party and historically flaky; the same-origin `/api/proxy` is primary. `www.theguardian.com` is allowlisted in `api/proxy.js` but nothing calls it (leftover — harmless).
 - ~~Weather emoji icons~~ / ~~weather 7-day 4+3 wrap~~ — **resolved in the 2026-07-11 overhaul** (shared `WeatherIcon` with exact WMO matching; single 7-across `.scroller` strip).
-- **Main JS chunk is 510 kB minified** (just over Vite's 500 kB warning line since the overhaul; 153 kB gzip) — informational, no code-splitting yet.
+- **Main JS chunk is 518 kB minified** (just over Vite's 500 kB warning line since the overhaul; 156 kB gzip) — informational, no code-splitting yet.
 - **German "Show translation" toggle is `min-h-[24px]`** (pre-dates the overhaul) — below the 44px touch rule; fixing it inline changes dialogue-line rhythm, so it's parked as a known exception.
 - **BriefingStrip duplicates two fetches once per page load** (sunset forecast, watchlist quotes) rather than sharing widget state — deliberate: widgets stay self-contained; the strip has no refresh interval.
 - **Raw palette classes outside tokens (deliberate, reserved):** CIMA module colours, EY category colours, emerald/rose/amber semantic accents, and `Badge`'s muted tint `bg-slate-400/15` (ui.jsx) — the last is the one raw `slate-*` in a component and could move to a token someday.

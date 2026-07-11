@@ -1,6 +1,6 @@
 # CLAUDE.md — Ethan's Dashboard
 
-Personal React + Vite + Tailwind PWA, 9 widgets, dark-only (slate/amoled themes). Primary device: installed PWA on a Pixel 9a (~412px).
+Personal React + Vite + Tailwind PWA, 10 widgets, dark-only (slate/amoled themes). Primary device: installed PWA on a Pixel 9a (~412px).
 
 ## Canonical references — read these, don't restate them
 
@@ -12,6 +12,7 @@ Personal React + Vite + Tailwind PWA, 9 widgets, dark-only (slate/amoled themes)
 - Every key uses the `dashboard_` prefix; values are JSON; dates are local-time ISO (`YYYY-MM-DD`). Full key list + shapes: DASHBOARD_AUDIT.md §6.
 - Never rename, repurpose, or change the shape of an existing key. The retired `dashboard_darkMode` is no longer read but must never be deleted or reused.
 - Never reset `dashboard_widgetOrder` — when adding a widget, append its id (App.jsx already heals saved orders).
+- The Edit-layout mode exports/imports every `dashboard_` key as a dated JSON backup (`src/lib/backup.js`) — validated, all-or-nothing, raw string values. New keys are covered automatically by the prefix; never write dashboard state outside it.
 
 ## Git & deploy
 
