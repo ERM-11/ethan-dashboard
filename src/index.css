@@ -42,6 +42,7 @@ html[data-theme='slate'] {
   --ink: #e2e8f0;
   --mut: #94a3b8;
   --focus: #cbd5e1;
+  --glow: radial-gradient(1100px 520px at 50% -140px, rgba(64, 84, 120, 0.22), transparent 70%);
 }
 html[data-theme='amoled'] {
   --bg: #000000;
@@ -53,10 +54,23 @@ html[data-theme='amoled'] {
   --ink: #e5e8ee;
   --mut: #8d97a9;
   --focus: #cbd5e1;
+  --glow: radial-gradient(1100px 520px at 50% -140px, rgba(64, 84, 120, 0.06), transparent 70%);
 }
 
 html {
   background: var(--bg);
+}
+
+/* Ambient depth: one very restrained radial glow behind the grid, themed via
+   --glow (slate: barely-lighter navy from the top; amoled: near-invisible so
+   OLED blacks stay black). Fixed + static — no repaint cost, no battery hit. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--glow);
 }
 
 #root {
@@ -71,6 +85,24 @@ html {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Entrance: on first mount, cards fade in and rise 8px, staggered ~40ms by grid
+   position (--enter-i set inline). Runs once per page load (mount animation —
+   reorders/theme toggles don't remount the keyed wrappers). Must be disabled
+   explicitly under reduced motion: the global kill-switch above zeroes duration
+   but NOT delay, which with fill-mode 'both' would leave late cards invisible
+   for their whole stagger. */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-enter {
+  animation: card-in 300ms ease-out both;
+  animation-delay: calc(var(--enter-i, 0) * 40ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-enter { animation: none !important; }
 }
 
 /* Every digit on the dashboard renders in this class — JetBrains Mono,

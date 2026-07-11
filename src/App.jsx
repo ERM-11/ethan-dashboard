@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ChevronUp, ChevronDown, Moon, Eclipse } from 'lucide-react'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import BriefingStrip from './components/BriefingStrip.jsx'
 import { focusRing, press, GhostBtn } from './components/ui.jsx'
 import WeatherWidget from './components/WeatherWidget.jsx'
 import PollenWidget from './components/PollenWidget.jsx'
@@ -85,12 +86,28 @@ export default function App() {
         </div>
       </header>
 
+      {/* 1px gradient hairline accent under the header */}
+      <div className="max-w-grid mx-auto px-4 pb-3" aria-hidden="true">
+        <div className="h-px bg-gradient-to-r from-transparent via-line2 to-transparent" />
+      </div>
+
+      <ErrorBoundary name="Briefing">
+        <div className="card-enter" style={{ '--enter-i': 0 }}>
+          <BriefingStrip />
+        </div>
+      </ErrorBoundary>
+
       <main className="max-w-grid mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-10">
-        {ids.map((id) => {
+        {ids.map((id, i) => {
           const w = WIDGETS[id]
           const W = w.el
           return (
-            <div key={id} className={`relative min-w-0 ${w.span ? 'sm:col-span-2 lg:col-span-2' : ''}`}>
+            <div
+              key={id}
+              id={`widget-${id}`}
+              style={{ '--enter-i': i + 1 }}
+              className={`relative min-w-0 scroll-mt-4 card-enter ${w.span ? 'sm:col-span-2 lg:col-span-2' : ''}`}
+            >
               {editing && (
                 <div className="absolute -top-2 right-2 z-10 flex gap-1 bg-card2 border border-line2 rounded-lg px-1">
                   <button aria-label={`Move ${w.name} earlier`} onClick={() => move(id, -1)}

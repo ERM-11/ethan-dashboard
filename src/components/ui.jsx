@@ -1,6 +1,9 @@
 // Shared UI primitives — design tokens live here so widgets stay consistent.
 import React, { useRef, useState } from 'react'
-import { ChevronRight, TriangleAlert } from 'lucide-react'
+import {
+  ChevronRight, TriangleAlert,
+  Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning
+} from 'lucide-react'
 
 export const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ring-offset-bg'
@@ -171,6 +174,43 @@ export function GhostBtn({ onClick, children, className = '', danger }) {
     >
       {children}
     </button>
+  )
+}
+
+// WMO weather code → lucide icon, exact code-range matching (replaces the old
+// emoji threshold table). Strokes stay neutral (currentColor) — callers set
+// text-ink / text-mut; no weather emoji anywhere in the app.
+const WMO_GROUPS = [
+  [(c) => c === 0, Sun], // clear
+  [(c) => c === 1 || c === 2, CloudSun], // mainly clear / partly cloudy
+  [(c) => c === 3, Cloud], // overcast
+  [(c) => c === 45 || c === 48, CloudFog], // fog
+  [(c) => (c >= 51 && c <= 57), CloudDrizzle], // drizzle incl. freezing
+  [(c) => (c >= 61 && c <= 67) || (c >= 80 && c <= 82), CloudRain], // rain + showers
+  [(c) => (c >= 71 && c <= 77) || c === 85 || c === 86, CloudSnow], // snow + grains + showers
+  [(c) => c >= 95, CloudLightning] // thunderstorm
+]
+export function weatherLabel(code) {
+  if (code === 0) return 'Clear'
+  if (code === 1 || code === 2) return 'Partly cloudy'
+  if (code === 3) return 'Overcast'
+  if (code === 45 || code === 48) return 'Fog'
+  if (code >= 51 && code <= 57) return 'Drizzle'
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return 'Rain'
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'Snow'
+  if (code >= 95) return 'Thunderstorm'
+  return 'Cloudy'
+}
+export function WeatherIcon({ code, size = 18, className = '', label }) {
+  const Icon = WMO_GROUPS.find(([match]) => match(code))?.[1] ?? Cloud
+  return (
+    <Icon
+      size={size}
+      strokeWidth={1.75}
+      className={className}
+      aria-hidden={label ? undefined : true}
+      aria-label={label}
+    />
   )
 }
 
