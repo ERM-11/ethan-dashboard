@@ -5,8 +5,41 @@ import { fetchViaProxy } from '../config.js'
 import { Card, Skeleton, ErrorState, Empty, focusRing, press, GhostBtn, inputCls } from './ui.jsx'
 import { useEffect, useRef } from 'react'
 
-const DEFAULTS = ['NVDA', 'GOOGL', 'AMZN', 'AVGO', 'AMD', 'SOFI', 'PLTR', 'NVO']
+// Exported for the header BriefingStrip (fresh-install parity) — keep this export intact.
+export const STOCK_DEFAULTS = ['NVDA', 'GOOGL', 'AMZN', 'AVGO', 'AMD', 'SOFI', 'PLTR', 'NVO']
+const DEFAULTS = STOCK_DEFAULTS
 const RANGES = { '1D': ['1d', '5m'], '5D': ['5d', '15m'], '1M': ['1mo', '1d'], '3M': ['3mo', '1d'], '6M': ['6mo', '1d'], '1Y': ['1y', '1wk'] }
+
+// Fixed index header row — not part of the watchlist, never stored in
+// dashboard_stockTickers, never sorted with it. `label`/`num` split so the
+// digits in the display name (e.g. "100" in "FTSE 100") render in .num while
+// the letters stay in the surrounding body font.
+const INDEX_DEFS = [
+  { symbol: '^FTSE', label: 'FTSE', num: '100' },
+  { symbol: '^GSPC', label: 'S&P', num: '500' }
+]
+
+// Market open/closed, computed from local wall-clock time in the exchange's
+// timezone — no holiday calendar, just weekday + hours (accepted simplification).
+const LSE_OPEN_MIN = 8 * 60
+const LSE_CLOSE_MIN = 16 * 60 + 30
+const NYSE_OPEN_MIN = 9 * 60 + 30
+const NYSE_CLOSE_MIN = 16 * 60
+
+function zonedDayAndMinutes(date, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone, hourCycle: 'h23', weekday: 'short', hour: '2-digit', minute: '2-digit'
+  }).formatToParts(date)
+  const map = {}
+  for (const p of parts) map[p.type] = p.value
+  const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+  return { day: weekdayMap[map.weekday], minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10) }
+}
+
+function isMarketOpen(timeZone, openMin, closeMin, date) {
+  const { day, minutes } = zonedDayAndMinutes(date, timeZone)
+  return day >= 1 && day <= 5 && minutes >= openMin && minutes < closeMin
+}
 
 // semantic day-change colours (the only green/red on this widget)
 const UP = '#34d399'
@@ -15,7 +48,8 @@ const DOWN = '#fb7185'
 const yahooUrl = (t, range = '5d', interval = '1d') =>
   `https://query1.finance.yahoo.com/v8/finance/chart/${t}?range=${range}&interval=${interval}`
 
-async function fetchQuote(ticker) {
+// Exported for the header BriefingStrip's top-mover chip — keep this export intact.
+export async function fetchQuote(ticker) {
   const res = await fetchViaProxy(yahooUrl(ticker))
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const j = await res.json()
@@ -68,6 +102,45 @@ function Spark({ closes, prev, up, ticker }) {
       <line x1="0" x2="80" y1={y(prev)} y2={y(prev)} strokeDasharray="2 2" strokeWidth="0.75" className="stroke-line2" />
       <polyline points={pts.join(' ')} fill="none" strokeWidth="1.5" stroke={color} />
     </svg>
+  )
+}
+
+// dot + word — status is never colour-only
+function MarketStatusDot({ label, open }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs">
+      <span className="text-mut">{label}</span>
+      <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${open ? 'bg-emerald-400' : 'bg-mut'}`} aria-hidden="true" />
+      <span className={open ? 'text-emerald-400' : 'text-mut'}>{open ? 'open' : 'closed'}</span>
+    </span>
+  )
+}
+
+// display-only index row: no button, no chevron, no remove — not part of the watchlist
+function IndexRow({ label, num, quote, loading }) {
+  const up = quote ? quote.change >= 0 : true
+  return (
+    <div className="flex items-center gap-2 py-1 min-h-[28px]">
+      <span className="text-xs text-mut truncate">{label} <span className="num">{num}</span></span>
+      {loading ? (
+        <>
+          <Skeleton className="h-3.5 w-14 ml-auto" />
+          <Skeleton className="h-3.5 w-16" />
+        </>
+      ) : quote ? (
+        <>
+          <span className="num text-sm ml-auto">{quote.price?.toFixed(2)}</span>
+          <span className={`num text-xs w-20 text-right ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {up ? '▲ +' : '▼ −'}{Math.abs(quote.pct).toFixed(2)}%
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="num text-sm text-mut ml-auto">—</span>
+          <span className="text-xs text-mut w-20 text-right">no data</span>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -175,16 +248,31 @@ export default function StockWidget() {
   const [sortAZ, setSortAZ] = useState(false)
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
+  // fixed index header row — separate from the watchlist, degrades per-index
+  const [indices, setIndices] = useState({})
+  const [indicesLoading, setIndicesLoading] = useState(true)
+  // recomputed once a minute so the LSE/NYSE open/closed dot stays current
+  const [now, setNow] = useState(() => new Date())
 
   const load = useCallback(async (list) => {
     setLoading(true)
     setFailed(false)
-    const results = await Promise.allSettled(list.map(fetchQuote))
+    setIndicesLoading(true)
+    const [results, idxResults] = await Promise.all([
+      Promise.allSettled(list.map(fetchQuote)),
+      Promise.allSettled(INDEX_DEFS.map((d) => fetchQuote(d.symbol)))
+    ])
     const q = {}
     results.forEach((r, i) => { if (r.status === 'fulfilled') q[list[i]] = r.value })
     setQuotes(q)
     setFailed(Object.keys(q).length === 0 && list.length > 0)
     setLoading(false)
+
+    // per-index degradation only — never feeds into the watchlist's `failed` state
+    const idx = {}
+    idxResults.forEach((r, i) => { if (r.status === 'fulfilled') idx[INDEX_DEFS[i].symbol] = r.value })
+    setIndices(idx)
+    setIndicesLoading(false)
   }, [])
 
   useEffect(() => {
@@ -193,6 +281,14 @@ export default function StockWidget() {
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tickers.join(',')])
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const lseOpen = isMarketOpen('Europe/London', LSE_OPEN_MIN, LSE_CLOSE_MIN, now)
+  const nyseOpen = isMarketOpen('America/New_York', NYSE_OPEN_MIN, NYSE_CLOSE_MIN, now)
 
   // Validate against Yahoo before committing to localStorage. Reads live `input`
   // state (no stale closure) and uses a functional setTickers update so a fresh
@@ -225,6 +321,20 @@ export default function StockWidget() {
     <Card icon={TrendingUp} title="Stocks" right={
       <GhostBtn onClick={() => setSortAZ(!sortAZ)}><span className="num text-xs">{sortAZ ? 'A–Z' : '% ▼'}</span></GhostBtn>
     }>
+      {/* fixed index header row — display-only, not part of dashboard_stockTickers,
+          visually distinct nested panel with a hairline break from the watchlist below */}
+      <div className="rounded-xl bg-card2 border border-line p-2.5 flex flex-col gap-1.5 mb-1">
+        <div className="flex items-center justify-between px-0.5">
+          <MarketStatusDot label="LSE" open={lseOpen} />
+          <MarketStatusDot label="NYSE" open={nyseOpen} />
+        </div>
+        <div className="flex flex-col divide-y divide-line">
+          {INDEX_DEFS.map((d) => (
+            <IndexRow key={d.symbol} label={d.label} num={d.num} quote={indices[d.symbol]} loading={indicesLoading} />
+          ))}
+        </div>
+      </div>
+
       {loading && (
         // skeleton mirrors ticker / sparkline / price / change rows
         <div className="flex flex-col gap-3 py-1">
