@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { ChevronUp, ChevronDown, Moon, Eclipse } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { ChevronUp, ChevronDown, Moon, Eclipse, Download, Upload, TriangleAlert } from 'lucide-react'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import BriefingStrip from './components/BriefingStrip.jsx'
-import { focusRing, press, GhostBtn } from './components/ui.jsx'
+import { focusRing, press, GhostBtn, SecondaryBtn, PrimaryBtn } from './components/ui.jsx'
+import { collectBackup, backupFilename, validateBackup, applyBackup } from './lib/backup.js'
 import WeatherWidget from './components/WeatherWidget.jsx'
 import PollenWidget from './components/PollenWidget.jsx'
 import SunsetWidget from './components/SunsetWidget.jsx'
@@ -49,6 +50,60 @@ export default function App() {
   const [theme, setTheme] = useLocalStorage('dashboard_theme', 'slate')
   const [order, setOrder] = useLocalStorage('dashboard_widgetOrder', DEFAULT_ORDER)
   const [editing, setEditing] = useState(false)
+  const [pendingImport, setPendingImport] = useState(null)
+  const [importError, setImportError] = useState(null)
+  const fileRef = useRef(null)
+
+  const toggleEditing = () => {
+    setEditing(!editing)
+    setPendingImport(null)
+    setImportError(null)
+  }
+
+  // download every dashboard_ key as a dated JSON backup
+  const exportData = () => {
+    const backup = collectBackup(window.localStorage)
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = backupFilename(backup)
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const onImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-picking the same file
+    setImportError(null)
+    setPendingImport(null)
+    if (!file) return
+    let text
+    try {
+      text = await file.text()
+    } catch {
+      setImportError("couldn't read the file")
+      return
+    }
+    const result = validateBackup(text)
+    if (!result.ok) {
+      setImportError(result.error)
+      return
+    }
+    setPendingImport(result)
+  }
+
+  const confirmImport = () => {
+    try {
+      applyBackup(window.localStorage, pendingImport.data)
+      window.location.reload() // every widget re-reads its keys
+    } catch {
+      setPendingImport(null)
+      setImportError('import failed — nothing was changed')
+    }
+  }
 
   // apply theme to <html> and keep the PWA chrome colour in sync
   useEffect(() => {
@@ -76,7 +131,7 @@ export default function App() {
         <h1 className="font-display font-bold text-xl">Ethan's Dashboard</h1>
         <div className="flex items-center gap-2 sm:gap-3">
           <Clock />
-          <GhostBtn onClick={() => setEditing(!editing)}>{editing ? 'Done' : 'Edit layout'}</GhostBtn>
+          <GhostBtn onClick={toggleEditing}>{editing ? 'Done' : 'Edit layout'}</GhostBtn>
           <button
             onClick={() => setTheme(amoled ? 'slate' : 'amoled')}
             aria-label={amoled ? 'Switch to slate theme' : 'Switch to pure-black theme'}
@@ -92,6 +147,55 @@ export default function App() {
       <div className="max-w-grid mx-auto px-4 pb-3" aria-hidden="true">
         <div className="h-px bg-gradient-to-r from-transparent via-line2 to-transparent" />
       </div>
+
+      {editing && (
+        <div className="max-w-grid mx-auto px-4 pb-3 flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <SecondaryBtn onClick={exportData}>
+              <span className="inline-flex items-center gap-1.5">
+                <Download size={16} aria-hidden="true" /> Export data
+              </span>
+            </SecondaryBtn>
+            <SecondaryBtn onClick={() => fileRef.current?.click()}>
+              <span className="inline-flex items-center gap-1.5">
+                <Upload size={16} aria-hidden="true" /> Import data
+              </span>
+            </SecondaryBtn>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={onImportFile}
+            />
+          </div>
+          {importError && (
+            <p className="text-xs text-amber-400 flex items-center gap-1.5" role="alert">
+              <TriangleAlert size={14} aria-hidden="true" /> Import failed: {importError}
+            </p>
+          )}
+          {pendingImport && (
+            <div className="bg-card2 rounded-xl border border-line p-3 flex flex-col gap-2 max-w-md">
+              <p className="text-sm">
+                Import <span className="num font-semibold">{pendingImport.keys.length}</span>{' '}
+                {pendingImport.keys.length === 1 ? 'key' : 'keys'}
+                {pendingImport.exportedAt && (
+                  <>
+                    {' '}from backup dated <span className="num font-semibold">{pendingImport.exportedAt}</span>
+                  </>
+                )}
+                ? This replaces the matching dashboard data and reloads the page.
+              </p>
+              <div className="flex items-center gap-2">
+                <PrimaryBtn onClick={confirmImport}>Import</PrimaryBtn>
+                <GhostBtn onClick={() => setPendingImport(null)}>Cancel</GhostBtn>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <ErrorBoundary name="Briefing">
         <div className="card-enter" style={{ '--enter-i': 0 }}>
