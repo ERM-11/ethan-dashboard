@@ -1,8 +1,8 @@
 # DASHBOARD_AUDIT.md
 
-Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`). Section numbers are a contract — other prompts reference them by number.
+Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`); **updated 2026-07-11 after the visual-overhaul round** (BriefingStrip, WeatherIcon, entrance animation, ambience, per-widget polish — see per-section notes). Section numbers are a contract — other prompts reference them by number.
 
-Build verified: `npm run build` exit code **0** (Vite 5.4.21, 1806 modules, PWA precache 14 entries / 792.83 KiB). `npm run dev` responds **200** on `/`.
+Build verified: `npm run build` exit code **0** (Vite 5.4.21, 1807 modules, PWA precache 14 entries / 807.13 KiB). `vite preview` responds **200** on `/`.
 
 ## 1. Tech Stack
 
@@ -48,10 +48,11 @@ dashboard/                      ← git repo root (remote "github")
     │   ├── cima-questions.json     4×50 questions
     │   └── ey-milestones.json      22 milestones + startDate + weeklyHourTarget
     └── components/
-        ├── ui.jsx              shared primitives: Card, Skeleton, ErrorState, Empty, Badge, Chip, Segmented, Accordion, ProgressBar, Primary/Secondary/GhostBtn, inputCls, focusRing, press, buzz
+        ├── ui.jsx              shared primitives: Card, Skeleton, ErrorState, Empty, Badge, Chip, Segmented, Accordion, ProgressBar, Primary/Secondary/GhostBtn, inputCls, focusRing, press, buzz, WeatherIcon + weatherLabel (WMO → lucide)
         ├── ErrorBoundary.jsx   per-widget class boundary with "Reload widget" reset
+        ├── BriefingStrip.jsx   header chip strip (not a widget): EY countdown, streaks, best sunset, top mover — read-only, scrolls to cards
         ├── WeatherWidget.jsx   7-day forecast + expandable hourly scroller
-        ├── PollenWidget.jsx    6 pollen types + tree/overall rollups
+        ├── PollenWidget.jsx    Overall rollup + 6 pollen types as two-column chips
         ├── SunsetWidget.jsx    sun arc + 5-day sunset-quality ring forecast
         ├── NewsWidget.jsx      BBC Business RSS with keyword filter chips
         ├── StockWidget.jsx     watchlist, sparklines, detail chart, validated add
@@ -67,59 +68,63 @@ The prompt library (boot prompt, task prompts) lives one level **above** the rep
 
 Order/config lives in `App.jsx` `WIDGETS` map; default order: weather, pollen, sunset, stocks, news, word, cima, german, ey. Only CIMA spans 2 columns (`sm:col-span-2 lg:col-span-2`). All widgets are self-contained (useState/useLocalStorage), wrapped in `ErrorBoundary`.
 
+App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the **BriefingStrip** (`BriefingStrip.jsx`, own ErrorBoundary, *not* in `dashboard_widgetOrder`) — a `.scroller` row of ≥44px chips (EY days-to-start from `ey-milestones.json`, CIMA + German streaks from their localStorage keys, best sunset day via SunsetWidget's exported `SUNSET_URL`/`calcSunsetScore`/`findHourlyIndex`, top watchlist mover via StockWidget's exported `fetchQuote`/`STOCK_DEFAULTS`; reads only, one fetch per page load, chips skeleton then drop on error, tap scrolls to `widget-<id>` anchors) — then the grid. Grid wrappers carry `id="widget-<id>"`, `scroll-mt-4`, and the `.card-enter` entrance animation staggered by `--enter-i` (see §5).
+
 ### WeatherWidget (`src/components/WeatherWidget.jsx`)
-- **Displays:** 7 day-tiles (weekday, WMO emoji icon, high/low °), tap a day → horizontal hourly scroller (every 3rd hour: time, icon, temp, precip-probability micro-bar + %), "Last updated" line.
-- **API:** `https://api.open-meteo.com/v1/forecast?latitude=55.9533&longitude=-3.1883&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FLondon` — direct fetch (Open-Meteo has CORS), 15-min refresh.
+- **Displays:** single 7-across horizontally scrollable day strip (`.scroller`, `-mx-4 px-4` bleed; each tile: weekday, shared `WeatherIcon`, high/low °, thin precip-probability bar shown at ≥10%); tap a day → horizontal hourly scroller (every 3rd hour: time, `WeatherIcon`, temp, precip micro-bar + %), "Last updated" line.
+- **API:** Open-Meteo forecast, `daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code&hourly=temperature_2m,precipitation_probability,weather_code` — direct fetch (Open-Meteo has CORS), 15-min refresh.
 - **localStorage:** none.
-- **Interactions:** day tiles toggle the hourly panel (aria-expanded); retry button on error.
-- **Notes:** day grid is `grid-cols-4 sm:grid-cols-7` — wraps 4+3 at phone width. Icons are emoji via a WMO threshold table (`icon()` scans `code >= c`, an approximation, not exact WMO matching).
+- **Interactions:** day tiles toggle the hourly panel (aria-expanded, full weekday + condition + temps in aria-label); retry button on error.
+- **Notes:** no emoji — icons come from the shared `WeatherIcon` (ui.jsx, exact WMO code-range matching). Skeleton is a 7-tile scroller row.
 
 ### PollenWidget (`src/components/PollenWidget.jsx`)
-- **Displays:** "Tree pollen" rollup row, 6 rows (Grass, Birch, Alder, Olive, Ragweed, Mugwort) with raw value + Low/Medium/High badge, "Overall" rollup, last-updated + "zero values out of season are normal" note.
+- **Displays:** prominent full-width "Overall" panel (max level across types) leading, then a two-column chip grid of the 6 types (Grass, Birch, Alder, Olive, Ragweed, Mugwort — raw value + Low/Medium/High badge). Rows rounding to 0 collapse behind a "Show all (+N)" ghost toggle (session state; if *everything* is 0, all show and the toggle hides). Last-updated + "zero values out of season are normal" note.
 - **API:** `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=…&longitude=…&current=grass_pollen,birch_pollen,alder_pollen,olive_pollen,ragweed_pollen,mugwort_pollen` — direct fetch, 15-min refresh.
-- **localStorage:** none. **Interactions:** retry only — display-only otherwise.
-- **Notes:** per-type thresholds `[low, high)` hard-coded in `TYPES`; levels always paired with the word (never colour-only).
+- **localStorage:** none. **Interactions:** show-all toggle, retry.
+- **Notes:** per-type thresholds `[low, high)` hard-coded in `TYPES`; levels always paired with the word (never colour-only). The former separate "Tree pollen" aggregate row was deliberately dropped in the 2026-07-11 overhaul (Birch/Alder/Olive chips + Overall cover it).
 
 ### SunsetWidget (`src/components/SunsetWidget.jsx`)
 - **Displays:** (1) semicircle sun arc with live sun position (minute tick), sunrise/sunset times, daylight duration, ▲/▼ delta vs yesterday, golden-hour time, tomorrow's times; (2) 5-day sunset-quality forecast — SVG ring gauges scored 0–100 by `calcSunsetScore` (documented in the file: mid-cloud Gaussian peaked at 40% σ=20 (+35), high cloud linear (+20); low cloud (−20), humidity>70% (−10), precip>30% (−10 hard), visibility<10 km (−5); +45 shift, clamped), label bands Poor<25 / Fair / Decent / Good / Great / Spectacular≥85, sunset time per day, **gold `#f0b429` ring + "best" badge on the highest-scoring day (reserved, this widget only)**.
 - **API:** one Open-Meteo forecast call: `daily=sunrise,sunset,daylight_duration&hourly=cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m,precipitation_probability,visibility&past_days=1&forecast_days=5` — 60-min refresh. Hourly sample matched to each day's sunset hour (`findHourlyIndex`), with neutral fallbacks when missing.
 - **localStorage:** none. **Interactions:** none (rings display-only); retry on error.
-- **Notes:** daily index 0 = yesterday (delta only); quality loop runs indices 1..end. Skeleton mirrors arc + stats + 5-ring row.
+- **Notes:** daily index 0 = yesterday (delta only); quality loop runs indices 1..end. Skeleton mirrors arc + stats + 5-ring row. **Exports `SUNSET_URL`, `calcSunsetScore`, `findHourlyIndex` for BriefingStrip — load-bearing, keep intact.**
 
 ### NewsWidget (`src/components/NewsWidget.jsx`)
 - **Displays:** 5 headlines from BBC Business RSS filtered by chip (All, EY/Big Four, UK Banking, Fintech, Consulting — keyword lists in `FILTERS`), each expandable to description + "Read more" link; source + date line per item.
 - **API:** `https://feeds.bbci.co.uk/news/business/rss.xml` via `fetchViaProxy` (proxy chain, §4), 30-min refresh, DOMParser transform (first 30 items).
 - **localStorage:** none. **Interactions:** filter chips, expand/collapse per headline, external links, retry.
+- **Notes:** per-item dates are relative — "today"/"yesterday" (plain text, compared via local `todayISO`) or a short date with digits in `.num`.
 
 ### StockWidget (`src/components/StockWidget.jsx`)
-- **Displays:** watchlist rows — ticker, 5-day sparkline (gradient fill, dashed prev-close line), price, ▲/▼ day % in emerald/rose; expandable per-ticker detail chart with range tabs (1D/5D/1M/3M/6M/1Y, per-range in-memory cache); add-ticker form with validation states.
-- **API:** `https://query1.finance.yahoo.com/v8/finance/chart/{T}?range={r}&interval={i}` via `fetchViaProxy`; quotes at range 5d/1d, 15-min refresh via `Promise.allSettled`.
-- **localStorage:** `dashboard_stockTickers` (defaults NVDA, GOOGL, AMZN, AVGO, AMD, SOFI, PLTR, NVO).
-- **Interactions:** sort toggle (% ▼ / A–Z), expand row → detail chart, remove (X), add with pre-commit validation (`validateTicker` distinguishes "invalid symbol" from "network error"; spinner in the Add button — the app's only spinner).
-- **Notes:** failed state only when *zero* quotes load; per-ticker "no data" otherwise.
+- **Displays:** fixed index header panel (`bg-card2`) with LSE/NYSE market-status dot + open/closed word and two display-only index rows — FTSE 100 (`^FTSE`) and S&P 500 (`^GSPC`), name + last + day % only; then watchlist rows — ticker, 5-day sparkline (gradient fill, dashed prev-close line), price, ▲/▼ day % in emerald/rose; expandable per-ticker detail chart with range tabs (1D/5D/1M/3M/6M/1Y, per-range in-memory cache); add-ticker form with validation states.
+- **API:** `https://query1.finance.yahoo.com/v8/finance/chart/{T}?range={r}&interval={i}` via `fetchViaProxy`; quotes at range 5d/1d, 15-min refresh via `Promise.allSettled` (indices fetched alongside in the same load, separate state).
+- **localStorage:** `dashboard_stockTickers` (defaults NVDA, GOOGL, AMZN, AVGO, AMD, SOFI, PLTR, NVO). Indices are **never** stored or counted in it.
+- **Interactions:** sort toggle (% ▼ / A–Z), expand row → detail chart, remove (X), add with pre-commit validation (`validateTicker` distinguishes "invalid symbol" from "network error"; spinner in the Add button — the app's only spinner). Index rows and status dots are display-only.
+- **Notes:** failed state only when *zero* watchlist quotes load; per-ticker and per-index "no data"/"—" otherwise. Market status = weekday + exchange-local hours via `Intl.DateTimeFormat` (LSE 08:00–16:30 Europe/London, NYSE 09:30–16:00 America/New_York), 60s tick, no holiday calendar (accepted simplification). **Exports `fetchQuote`, `STOCK_DEFAULTS` for BriefingStrip — load-bearing, keep intact.**
 
 ### WordWidget (`src/components/WordWidget.jsx`)
 - **Displays:** deterministic word of the day (`dayOfYear() % vocab.length`) with pronunciation/part-of-speech, definition, example; quiz mode blanks the word (regex `______`), guess input, correct/incorrect verdict, quiz accuracy line; known/new vote buttons with lifetime tally, once per day.
 - **API:** none (local `vocabulary.json`).
 - **localStorage:** `dashboard_wordMode`, `dashboard_wordStats`, `dashboard_wordVoteDate`, `dashboard_quizStats`.
 - **Interactions:** learn/quiz segmented control, guess+Reveal form, vote buttons (aria-disabled after voting, "Done for today ✓"), haptic on vote/reveal.
+- **Notes:** quiz mode shows a header accuracy chip (`.num` %, "—" with zero attempts) plus the inline accuracy line ("No quiz attempts yet" at zero).
 
 ### GermanWidget (`src/components/GermanWidget.jsx`)
-- **Displays:** one dialogue exercise (id/theme/level header, lines with blanks), per-line answer inputs, per-line ✓/✗ verdicts + expected answer, per-line "Show translation" toggle; pool progress bar (completed/pool), Mon-first week calendar of practice days, streak + accuracy line (🔥 at ≥7).
+- **Displays:** one dialogue exercise (id/theme/level header, lines with blanks), per-line single-line answer inputs (`inputCls`), per-line ✓/✗ verdicts + expected answer, per-line "Show translation" toggle; pool progress bar (completed/pool), then a labelled stat row (streak + accuracy as distinct `.num` stat blocks, lucide `Flame` at ≥7) above the Mon-first week calendar.
 - **API:** none (local `german-exercises.json`).
 - **localStorage:** `dashboard_germanLevel`, `dashboard_germanCompleted`, `dashboard_germanMistakes`, `dashboard_germanDates`, `dashboard_germanStats`, `dashboard_germanStreak`.
 - **Interactions:** level segmented (All/A2/B1/B2), Check (haptic), Next, Skip, Review Mistakes (aria-disabled when none, helper text — no tooltip-only state).
 - **Notes:** streak increments once per local day; dates array capped at 60.
 
 ### CimaWidget (`src/components/CimaWidget.jsx`) — 2-col span
-- **Displays:** BA1–BA4 module tabs (identity colours), stats line (Attempted x/50, Accuracy %, Streak (best), Overall x/200), module progress bar + 4 mini per-module bars, question card (module pill, topic, difficulty dot+word, A–D options with ✓/✗ reveal + explanation), mode buttons, study-history accordion (last 50 stored / 10 shown, tap to revisit), two-step reset with 5-s auto-cancel.
+- **Displays:** BA1–BA4 module tabs (identity colours), 2×2 stat-cell grid (Attempted, Accuracy, Streak with best sub-line + lucide `Flame` at ≥7, Overall — `bg-card2` cells, values `.num` bold, holds at 412px), module progress bar + 4 mini per-module bars each labelled with its `.num` module code in the module's text colour, question card (module pill, topic, difficulty dot+word, A–D options with ✓/✗ reveal + explanation), mode buttons (Daily Challenge marked with lucide `Star`), study-history accordion (last 50 stored / 10 shown, tap to revisit), two-step reset with 5-s auto-cancel.
 - **API:** none (local `cima-questions.json`).
 - **localStorage:** `dashboard_cima_activeModule`, `dashboard_cima_attempts`, `dashboard_cima_reviewQueue`, `dashboard_cima_streak`, `dashboard_cima_history`, `dashboard_cima_dailyCompleted`.
-- **Interactions:** module tabs, answer buttons (haptic, disabled after pick), Practice / Review Mistakes / Weak Topics / ⭐ Daily Challenge modes, Skip, history rows, reset.
+- **Interactions:** module tabs, answer buttons (haptic, disabled after pick), Practice / Review Mistakes / Weak Topics / Daily Challenge modes, Skip, history rows, reset.
 - **Notes:** spaced repetition — wrong answers enter the queue at interval 1 day, correct answers double it (cap 30); review picks entries past their interval. Daily Challenge is deterministic (unattempted sorted by id, `dayOfYear % length`) and renders a completed state once done per module per day. Module colours `bg-blue-500/emerald-500/violet-500/amber-500` are the reserved identity hexes from the boot prompt.
 
 ### EyWidget (`src/components/EyWidget.jsx`)
-- **Displays:** hero countdown (days until `startDate` 2026-09-01) + Week n of 22 + window progress bar (from 2026-04-01); category filter chips; milestone list (category dot, checkbox, title, deadline, overdue/due-soon badges) — default view = first 5 incomplete, "Show all n" toggle; weekly hours form ("Log" **replaces** the current week's value, capped 26 weeks), 8-week bar history with target line + ✓ over target weeks; monthly check-in reminder from the 26th.
+- **Displays:** hero countdown (days until `startDate` 2026-09-01) + Week n of 22 + window progress bar (from 2026-04-01); category filter chips; an "Overdue" accordion (only when overdue items exist) with an amber `(n)` count badge holding all overdue-incomplete milestones — never duplicated in the main list; main list default = next **3** actionable (incomplete, not overdue, soonest first), "Show all n" toggle reveals the full non-overdue list; rows share one renderer (category dot, checkbox, title, `.num` deadline, amber overdue/due-soon badges); weekly hours form ("Log" **replaces** the current week's value, capped 26 weeks), 8-week bar history with target line + ✓ over target weeks; monthly check-in reminder from the 26th.
 - **API:** none (local `ey-milestones.json`).
 - **localStorage:** `dashboard_ey_milestoneStatus`, `dashboard_ey_hoursLog`, `dashboard_ey_categoryFilter`.
 - **Interactions:** filter chips, milestone toggle (haptic), show-all toggle, hours form.
@@ -143,7 +148,10 @@ Canonical token table, card pattern, colour policy, type scale, and motion rules
 - **Accents (semantic only):** emerald-400/rose-400 for stock moves + quiz right/wrong + completion ✓; amber-400 warnings; gold `#f0b429` reserved to SunsetWidget's best day; CIMA module identity colours (blue/emerald/violet/amber 500); EY categories cyan/pink/indigo/slate 500. No blue UI accent.
 - **Type:** DM Sans body, Space Grotesk `font-display` (titles/h1 only), JetBrains Mono for every digit via `.num` (`slashed-zero tabular-nums` — works because self-hosted). Strict five-size scale enforced by the Tailwind `fontSize` override (12/14/16/20/28).
 - **Layout:** `max-w-grid` (1600px); grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4`; only CIMA spans 2. Card = `bg-card rounded-2xl border border-line p-4`, no shadows anywhere. `#root` pads all four safe-area insets.
-- **Reusable classes (index.css):** `.num`, `.press` (scale 0.97 on :active), `.shimmer` (skeleton highlight), `.scroller` (hidden-scrollbar horizontal scroll with edge fade masks). Global `prefers-reduced-motion` kill-switch. Shared Tailwind strings from ui.jsx: `focusRing`, button/input/badge/chip/segmented/accordion treatments.
+- **Reusable classes (index.css):** `.num`, `.press` (scale 0.97 on :active), `.shimmer` (skeleton highlight), `.scroller` (hidden-scrollbar horizontal scroll with edge fade masks), `.card-enter` (entrance animation, below). Global `prefers-reduced-motion` kill-switch. Shared Tailwind strings from ui.jsx: `focusRing`, button/input/badge/chip/segmented/accordion treatments.
+- **Entrance animation:** `.card-enter` (keyframe `card-in`: fade + 8px rise, 300ms ease-out, `both` fill) on the BriefingStrip and each grid wrapper, staggered 40ms by grid position via inline `--enter-i`. Runs once per page load (mount-only; reorder/theme toggles don't remount). Explicit `animation: none !important` under reduced motion — required because the global kill-switch zeroes duration but not delay.
+- **Ambience:** per-theme `--glow` radial gradient (slate: faint navy from top; amoled: near-invisible) painted by `body::before` (fixed, z-index −1, static). 1px gradient hairline under the header (`via-line2`).
+- **Icons:** no emoji anywhere. Weather conditions via the shared `WeatherIcon`/`weatherLabel` in ui.jsx (exact WMO code-range → lucide); streak flame = lucide `Flame`; daily challenge = lucide `Star`.
 
 ## 6. State Management
 
@@ -191,8 +199,10 @@ All parsed and counted directly from the JSON on 2026-07-11:
 
 - **Build/dev:** clean — build exit 0, no warnings beyond none; dev 200. No console errors observable without a browser (see USER VERIFY).
 - **Public proxy fallbacks are best-effort:** `api.allorigins.win` and `corsproxy.io` are third-party and historically flaky; the same-origin `/api/proxy` is primary. `www.theguardian.com` is allowlisted in `api/proxy.js` but nothing calls it (leftover — harmless).
-- **Weather emoji icons:** conditions render as emoji via an approximate WMO threshold scan (`code >= c` picks the last matching entry, not exact code matching — e.g. code 77 renders as ❄️'s neighbour band). Currently *allowed* by the boot prompt ("emoji only for weather conditions and the streak flame"); the planned visual overhaul replaces them with a WeatherIcon component.
-- **Weather 7-day grid wraps 4+3** on phones (`grid-cols-4 sm:grid-cols-7`) — a known target of the next overhaul, not a bug.
+- ~~Weather emoji icons~~ / ~~weather 7-day 4+3 wrap~~ — **resolved in the 2026-07-11 overhaul** (shared `WeatherIcon` with exact WMO matching; single 7-across `.scroller` strip).
+- **Main JS chunk is 510 kB minified** (just over Vite's 500 kB warning line since the overhaul; 153 kB gzip) — informational, no code-splitting yet.
+- **German "Show translation" toggle is `min-h-[24px]`** (pre-dates the overhaul) — below the 44px touch rule; fixing it inline changes dialogue-line rhythm, so it's parked as a known exception.
+- **BriefingStrip duplicates two fetches once per page load** (sunset forecast, watchlist quotes) rather than sharing widget state — deliberate: widgets stay self-contained; the strip has no refresh interval.
 - **Raw palette classes outside tokens (deliberate, reserved):** CIMA module colours, EY category colours, emerald/rose/amber semantic accents, and `Badge`'s muted tint `bg-slate-400/15` (ui.jsx) — the last is the one raw `slate-*` in a component and could move to a token someday.
 - **`useFetchData` interval doesn't restart on manual `refresh()`** and its `load` deliberately omits `transform`/`fetcher` from deps (eslint-disabled) — fine in practice since both are static per widget.
 - **Accordion `maxHeight` measured once per toggle** (`ref.current?.scrollHeight`): content that grows while open (CIMA history gaining entries) can clip until re-toggled. Minor.
