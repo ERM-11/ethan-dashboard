@@ -29,11 +29,22 @@ export default function WordWidget() {
     setQuizStats({ quizAttempts: quizStats.quizAttempts + 1, quizCorrect: quizStats.quizCorrect + (correct ? 1 : 0) })
   }
   const blanked = (s) => s.replace(new RegExp(word.word, 'gi'), '______')
+  const quizAcc = quizStats.quizAttempts ? Math.round((quizStats.quizCorrect / quizStats.quizAttempts) * 100) : null
 
   return (
     <Card icon={BookOpen} title="Word of the Day" right={
-      <Segmented options={['learn', 'quiz']} value={mode} label="Word mode"
-        onChange={(m) => { setMode(m); setRevealed(false); setGuess('') }} />
+      <div className="flex items-center gap-2">
+        {mode === 'quiz' && (
+          <span
+            className="num shrink-0 rounded-full bg-card2 border border-line px-2 py-0.5 text-xs text-mut"
+            title={quizAcc === null ? 'No quiz attempts yet' : `${quizStats.quizCorrect}/${quizStats.quizAttempts} correct`}
+          >
+            {quizAcc === null ? '—' : `${quizAcc}%`}
+          </span>
+        )}
+        <Segmented options={['learn', 'quiz']} value={mode} label="Word mode"
+          onChange={(m) => { setMode(m); setRevealed(false); setGuess('') }} />
+      </div>
     }>
       {mode === 'learn' || revealed ? (
         <div>
@@ -59,8 +70,10 @@ export default function WordWidget() {
               {correct ? '✓ Correct' : `✗ Not quite — the answer is "${word.word}"`}
             </p>
           )}
-          <p className="num text-xs text-mut">
-            Quiz accuracy: {quizStats.quizAttempts ? Math.round((quizStats.quizCorrect / quizStats.quizAttempts) * 100) : 0}% ({quizStats.quizCorrect}/{quizStats.quizAttempts})
+          <p className="text-xs text-mut">
+            {quizStats.quizAttempts
+              ? <>Quiz accuracy: <span className="num">{quizAcc}%</span> (<span className="num">{quizStats.quizCorrect}/{quizStats.quizAttempts}</span>)</>
+              : 'No quiz attempts yet'}
           </p>
         </>
       )}

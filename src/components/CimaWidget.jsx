@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, Flame, Star } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import { todayISO, dayOfYear } from '../config.js'
 import { Card, ProgressBar, Accordion, PrimaryBtn, SecondaryBtn, GhostBtn, focusRing, press, buzz } from './ui.jsx'
@@ -11,6 +11,21 @@ const MODULE_TEXT = { BA1: 'text-blue-400', BA2: 'text-emerald-400', BA3: 'text-
 const DIFF = { easy: ['bg-emerald-400', 'Easy'], medium: ['bg-amber-400', 'Medium'], hard: ['bg-rose-400', 'Hard'] }
 const byId = {}
 MODULES.forEach((m) => bank[m].forEach((q) => { byId[q.id] = q }))
+
+// one cell of the 2x2 header stat grid — label stays in the body font,
+// only the digits take .num
+function StatCell({ label, value, sub, icon }) {
+  return (
+    <div className="rounded-lg bg-card2 border border-line px-3 py-2 flex flex-col gap-0.5 min-w-0">
+      <span className="text-xs text-mut truncate">{label}</span>
+      <span className="flex items-center gap-1 min-w-0">
+        <span className="num text-sm font-bold text-ink truncate">{value}</span>
+        {icon}
+      </span>
+      {sub && <span className="text-xs text-mut truncate">{sub}</span>}
+    </div>
+  )
+}
 
 export default function CimaWidget() {
   const [module_, setModule] = useLocalStorage('dashboard_cima_activeModule', 'BA1')
@@ -135,26 +150,37 @@ export default function CimaWidget() {
         ))}
       </div>
       {/* stats */}
-      <div className="num flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-mut">
-        <span>Attempted <b className="text-ink">{s.done}/{s.total}</b></span>
-        <span>Accuracy <b className="text-ink">{s.acc}%</b></span>
-        <span>Streak <b className="text-ink">{streak.current >= 7 ? '🔥' : ''}{streak.current}d</b> (best {streak.best})</span>
-        <span>Overall <b className="text-ink">{overallDone}/200</b></span>
+      <div className="grid grid-cols-2 gap-2">
+        <StatCell label="Attempted" value={`${s.done}/${s.total}`} />
+        <StatCell label="Accuracy" value={`${s.acc}%`} />
+        <StatCell
+          label="Streak"
+          value={`${streak.current}d`}
+          icon={streak.current >= 7 ? <Flame size={14} className="text-amber-400 shrink-0" aria-hidden="true" /> : null}
+          sub={<>best <span className="num">{streak.best}</span></>}
+        />
+        <StatCell label="Overall" value={`${overallDone}/200`} />
       </div>
       <ProgressBar pct={(s.done / s.total) * 100} colorClass={MODULE_COLOR[module_]} label={`${Math.round((s.done / s.total) * 100)}%`} />
       <div className="flex gap-1.5">
         {MODULES.map((m) => {
           const ms = modStats(m)
-          return <div key={m} className="flex-1 h-1 rounded-full bg-card2 overflow-hidden" title={`${m}: ${ms.done}/${ms.total}`}>
-            <div className={`h-full ${MODULE_COLOR[m]}`} style={{ width: `${(ms.done / ms.total) * 100}%` }} />
-          </div>
+          return (
+            <div key={m} className="flex-1 min-w-0 flex flex-col gap-1" title={`${m}: ${ms.done}/${ms.total}`}>
+              <span className={`num text-xs font-semibold ${MODULE_TEXT[m]}`}>{m}</span>
+              <div className="h-1 rounded-full bg-card2 overflow-hidden">
+                <div className={`h-full ${MODULE_COLOR[m]}`} style={{ width: `${(ms.done / ms.total) * 100}%` }} />
+              </div>
+            </div>
+          )
         })}
       </div>
 
       {/* question card */}
       {mode === 'daily' && dailyDone && (!current || current.id === dailyQuestion?.id) && selected === null ? (
-        <p className="text-sm text-center py-6 text-mut">
-          ⭐ Today's <span className="num">{module_}</span> Daily Challenge completed ✓ — come back tomorrow
+        <p className="text-sm text-center py-6 text-mut flex items-center justify-center gap-1.5">
+          <Star size={14} className="shrink-0" aria-hidden="true" />
+          Today's <span className="num">{module_}</span> Daily Challenge completed ✓ — come back tomorrow
         </p>
       ) : current ? (
         <div className="rounded-xl bg-card2 border border-line p-3 flex flex-col gap-2.5">
@@ -165,7 +191,10 @@ export default function CimaWidget() {
               <span className={`w-2 h-2 rounded-full ${DIFF[current.difficulty][0]}`} aria-hidden="true" /> {DIFF[current.difficulty][1]}
             </span>
             {mode === 'daily' && current.id === dailyQuestion?.id && (
-              <span className="text-mut">⭐ Daily Challenge — {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+              <span className="text-mut flex items-center gap-1">
+                <Star size={14} className="shrink-0" aria-hidden="true" />
+                Daily Challenge — <span className="num">{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+              </span>
             )}
           </div>
           <p className="text-sm font-semibold">{current.question}</p>
@@ -210,7 +239,10 @@ export default function CimaWidget() {
         <SecondaryBtn onClick={() => start('review')} ariaDisabled={!reviewAvailable}>Review Mistakes</SecondaryBtn>
         <SecondaryBtn onClick={() => start('weak')}>Weak Topics</SecondaryBtn>
         <SecondaryBtn onClick={() => start('daily')} ariaDisabled={dailyDone}>
-          ⭐ Daily Challenge{dailyDone ? ' ✓' : ''}
+          <span className="flex items-center gap-1.5">
+            <Star size={14} className="shrink-0" aria-hidden="true" />
+            Daily Challenge{dailyDone ? ' ✓' : ''}
+          </span>
         </SecondaryBtn>
       </div>
       <p className="text-xs text-mut -mt-1">
