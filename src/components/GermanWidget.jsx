@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { Languages } from 'lucide-react'
+import { Languages, Flame } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import { todayISO, parseISO, mondayOf } from '../config.js'
 import { Card, PrimaryBtn, SecondaryBtn, GhostBtn, ProgressBar, Segmented, focusRing, buzz, inputCls } from './ui.jsx'
@@ -119,24 +119,34 @@ export default function GermanWidget() {
           )}
         </>
       )}
-      <div className="border-t border-line pt-2 flex flex-col gap-2">
+      <div className="border-t border-line pt-2 flex flex-col gap-3">
         <ProgressBar pct={pool.length ? (completedInPool / pool.length) * 100 : 0} label={`${completedInPool}/${pool.length}`} />
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1" aria-label="This week's practice days">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((lbl, i) => (
-              <div key={i} title={week[i]}
-                className={`num w-5 h-5 rounded flex items-center justify-center text-xs ${
-                  dates.includes(week[i])
-                    ? 'bg-emerald-400/20 border border-emerald-500 text-emerald-400'
-                    : 'bg-card2 text-mut'
-                } ${i === todayIdx ? 'ring-2 ring-focus' : ''}`}>
-                {lbl}
-              </div>
-            ))}
+        <div className="flex items-center gap-5">
+          <div className="flex flex-col">
+            <span className="num text-base font-bold flex items-center gap-1">
+              {streak.current >= 7 && <Flame size={14} strokeWidth={2} aria-hidden="true" className="text-ink" />}
+              {streak.current}
+            </span>
+            <span className="text-xs text-mut">day streak</span>
           </div>
-          <span className="num text-xs text-mut">
-            {streak.current >= 7 ? '🔥 ' : ''}{streak.current} day streak · {stats.done ? Math.round((stats.correct / stats.done) * 100) : 0}% correct
-          </span>
+          <div className="flex flex-col">
+            <span className="num text-base font-bold">
+              {stats.done ? Math.round((stats.correct / stats.done) * 100) : 0}%
+            </span>
+            <span className="text-xs text-mut">accuracy</span>
+          </div>
+        </div>
+        <div className="flex gap-1" aria-label="This week's practice days">
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((lbl, i) => (
+            <div key={i} title={week[i]}
+              className={`num w-5 h-5 rounded flex items-center justify-center text-xs ${
+                dates.includes(week[i])
+                  ? 'bg-emerald-400/20 border border-emerald-500 text-emerald-400'
+                  : 'bg-card2 text-mut'
+              } ${i === todayIdx ? 'ring-2 ring-focus' : ''}`}>
+              {lbl}
+            </div>
+          ))}
         </div>
       </div>
     </Card>

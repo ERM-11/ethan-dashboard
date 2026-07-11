@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Target } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import { todayISO, parseISO, mondayOf } from '../config.js'
-import { Card, Chip, Badge, ProgressBar, GhostBtn, focusRing, press, buzz, inputCls } from './ui.jsx'
+import { Card, Chip, Badge, ProgressBar, Accordion, GhostBtn, focusRing, press, buzz, inputCls } from './ui.jsx'
 import data from '../data/ey-milestones.json'
 
 // EY categories use a non-overlapping palette (CIMA module colours are reserved)
@@ -28,9 +28,15 @@ export default function EyWidget() {
   const windowPct = Math.max(0, Math.min(100, ((now - WINDOW_START) / (START - WINDOW_START)) * 100))
   const week = Math.max(1, Math.min(22, Math.floor((mondayOf(now) - mondayOf(WINDOW_START)) / (7 * 86400000)) + 1))
 
+  const today = todayISO()
   const milestones = [...data.milestones].sort((a, b) => a.deadline.localeCompare(b.deadline))
   const filtered = milestones.filter((m) => filter === 'All' || m.category === filter)
-  const visible = showAll ? filtered : filtered.filter((m) => !status[m.id]?.completed).slice(0, 5)
+  const isOverdue = (m) => !status[m.id]?.completed && m.deadline < today
+  // overdue milestones live only in the Overdue accordion — never duplicated in the main list
+  const overdue = filtered.filter(isOverdue)
+  const rest = filtered.filter((m) => !isOverdue(m))
+  const actionable = rest.filter((m) => !status[m.id]?.completed) // already soonest-first
+  const visible = showAll ? rest : actionable.slice(0, 3)
 
   const toggle = (id) => {
     buzz()
@@ -55,6 +61,32 @@ export default function EyWidget() {
   const maxH = Math.max(data.weeklyHourTarget, ...last8.map((w) => w.hours ?? 0))
   const checkinDue = now.getDate() >= 26
 
+  const renderMilestoneRow = (m) => {
+    const done = status[m.id]?.completed
+    const late = isOverdue(m)
+    const soon = !done && !late && (parseISO(m.deadline) - now) / 86400000 <= 7
+    return (
+      <li key={m.id} className="relative pl-4 border-l border-line pb-1">
+        <span className={`absolute -left-[5px] top-3 w-2.5 h-2.5 rounded-full ${CATS[m.category]}`} aria-hidden="true" />
+        <button onClick={() => toggle(m.id)} className={`w-full flex items-center gap-2 text-left py-1.5 min-h-[44px] ${press} ${focusRing}`}
+          aria-pressed={!!done} title={m.description}>
+          <span className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center text-xs ${
+            done ? 'bg-emerald-400/20 border-emerald-500 text-emerald-400' : 'border-line2'
+          }`} aria-hidden="true">{done ? '✓' : ''}</span>
+          <span className={`text-sm flex-1 ${done ? 'line-through text-mut' : ''}`}>
+            {m.title}
+            {m.category === 'cima' && <span className="ml-1 text-xs font-mono text-mut">CIMA</span>}
+          </span>
+          <span className="num text-xs text-mut shrink-0">
+            {parseISO(m.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          </span>
+          {late && <Badge tone="warn">overdue</Badge>}
+          {soon && <Badge tone="warn">due soon</Badge>}
+        </button>
+      </li>
+    )
+  }
+
   return (
     <Card icon={Target} title="EY Pre-Start">
       <div className="text-center">
@@ -67,41 +99,25 @@ export default function EyWidget() {
         {FILTERS.map((f) => <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>{f === 'All' ? 'All' : f}</Chip>)}
       </div>
 
+      {overdue.length > 0 && (
+        <Accordion label={
+          <>Overdue <Badge tone="warn">(<span className="num">{overdue.length}</span>)</Badge></>
+        }>
+          <ul className="flex flex-col">{overdue.map(renderMilestoneRow)}</ul>
+        </Accordion>
+      )}
+
       {visible.length === 0 ? (
         <p className="text-sm text-mut text-center py-3">
-          {filtered.length ? 'All caught up in this view ✓' : `No ${filter} milestones`}
+          {!filtered.length ? `No ${filter} milestones`
+            : overdue.length ? 'Nothing else due — check Overdue above'
+            : 'All caught up in this view ✓'}
         </p>
       ) : (
-        <ul className="flex flex-col">
-          {visible.map((m) => {
-            const done = status[m.id]?.completed
-            const overdue = !done && m.deadline < todayISO()
-            const soon = !done && !overdue && (parseISO(m.deadline) - now) / 86400000 <= 7
-            return (
-              <li key={m.id} className="relative pl-4 border-l border-line pb-1">
-                <span className={`absolute -left-[5px] top-3 w-2.5 h-2.5 rounded-full ${CATS[m.category]}`} aria-hidden="true" />
-                <button onClick={() => toggle(m.id)} className={`w-full flex items-center gap-2 text-left py-1.5 min-h-[44px] ${press} ${focusRing}`}
-                  aria-pressed={!!done} title={m.description}>
-                  <span className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center text-xs ${
-                    done ? 'bg-emerald-400/20 border-emerald-500 text-emerald-400' : 'border-line2'
-                  }`} aria-hidden="true">{done ? '✓' : ''}</span>
-                  <span className={`text-sm flex-1 ${done ? 'line-through text-mut' : ''}`}>
-                    {m.title}
-                    {m.category === 'cima' && <span className="ml-1 text-xs font-mono text-mut">CIMA</span>}
-                  </span>
-                  <span className="num text-xs text-mut shrink-0">
-                    {parseISO(m.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  </span>
-                  {overdue && <Badge tone="danger">overdue</Badge>}
-                  {soon && <Badge tone="warn">due soon</Badge>}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <ul className="flex flex-col">{visible.map(renderMilestoneRow)}</ul>
       )}
       <GhostBtn onClick={() => setShowAll(!showAll)} className="self-start -mt-1">
-        {showAll ? 'Show upcoming only' : <>Show all <span className="num">{filtered.length}</span></>}
+        {showAll ? 'Show upcoming only' : <>Show all <span className="num">{rest.length}</span></>}
       </GhostBtn>
 
       <div className="border-t border-line pt-2 flex flex-col gap-2">
