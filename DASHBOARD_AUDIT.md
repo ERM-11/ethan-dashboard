@@ -1,8 +1,8 @@
 # DASHBOARD_AUDIT.md
 
-Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`); **updated 2026-07-11 after the visual-overhaul round** (BriefingStrip, WeatherIcon, entrance animation, ambience, per-widget polish — see per-section notes); **updated again 2026-07-11 after the heatmap + backup round** (Study Activity widget, Edit-layout Export/Import — §2, §3, §4, §6 notes). Section numbers are a contract — other prompts reference them by number.
+Generated 2026-07-11 by a full-codebase audit (post visual redesign `fe4899d`, post fix round `58f14fb` + `9352367`); **updated 2026-07-11 after the visual-overhaul round** (BriefingStrip, WeatherIcon, entrance animation, ambience, per-widget polish — see per-section notes); **updated again 2026-07-11 after the heatmap + backup round** (Study Activity widget, Edit-layout Export/Import — §2, §3, §4, §6 notes); **updated 2026-07-12 after the readiness + hygiene round** (Today's Focus widget + `src/lib/readiness.js`, Vitest/ESLint toolchain, React.lazy code-split of CIMA/German, German toggle hit-area fix, `tint` token — §1, §2, §3, §4, §5, §6, §8 notes). Section numbers are a contract — other prompts reference them by number.
 
-Build verified: `npm run build` exit code **0** (Vite 5.4.21, 1810 modules, PWA precache 14 entries / 815.10 KiB). `vite preview` responds **200** on `/`.
+Build verified 2026-07-12: `npm run build` exit code **0** with **no chunk-size warning** (main 291.44 kB / gzip 92.60, lazy `CimaWidget` chunk 154.96 kB, lazy `GermanWidget` chunk 80.90 kB, shared `flame` micro-chunk 0.37 kB; PWA precache 17 entries / 824.83 KiB). `npm run test` **96/96** across 7 files (mutation-checked — see §8); `npm run lint` exit **0** (7 structural react-refresh warnings). `vite preview` responds **200** on `/`.
 
 ## 1. Tech Stack
 
@@ -18,10 +18,13 @@ npm-installed (no CDN imports anywhere; fonts are the only external `<link>`):
 | tailwindcss | ^3.4.17 | styling |
 | postcss / autoprefixer | ^8.4.49 / ^10.4.20 | CSS pipeline |
 | pngjs | ^7.0.0 | dev-only, icon generation script |
+| vitest / jsdom | ^3.2.4 / ^26.1.0 | dev-only — unit + component tests (`vitest.config.js`; node env default, jsdom per-file) |
+| @testing-library/react (+ dom, jest-dom, user-event) | ^16.3.0 | dev-only — widget smoke tests |
+| eslint (+ @eslint/js, globals, eslint-plugin-react-hooks ^5.2, eslint-plugin-react-refresh) | ^9.29.0 | dev-only — flat config, no style rules |
 
 Fonts: DM Sans + Space Grotesk from Google Fonts (`index.html` `<link>`); **JetBrains Mono self-hosted** (three woff2 in `src/assets/fonts/`, `@font-face` in `src/index.css`) so its slashed-zero OpenType feature survives (Google's build strips GSUB). The woff2 files are in the service-worker precache (`globPatterns` includes `woff2`).
 
-No test framework, no linter config, no TypeScript. Scripts: `dev`, `build`, `preview`, `icons`.
+Vitest + Testing Library and ESLint 9 (flat config) since the 2026-07-12 hygiene round; still no TypeScript. Scripts: `dev`, `build`, `preview`, `test`, `test:watch`, `lint`, `icons`.
 
 ## 2. File Structure
 
@@ -33,18 +36,23 @@ dashboard/                      ← git repo root (remote "github")
 ├── scripts/make-icons.mjs      generates the PNG icons (pngjs), npm run icons
 ├── index.html                  meta/PWA tags, Google Fonts link, pre-paint theme script
 ├── vite.config.js              react + VitePWA (manifest, workbox runtimeCaching rules)
-├── tailwind.config.js          strict 5-size fontSize scale, CSS-var colour tokens, font stacks
+├── vitest.config.js            test config — separate from vite.config.js so tests never boot the PWA plugin; node env default, component tests opt into jsdom per-file; TZ pinned to Pacific/Auckland so UTC calendar bugs fail loudly
+├── eslint.config.js            ESLint 9 flat config: @eslint/js + react-hooks + react-refresh recommended, no style rules
+├── tailwind.config.js          strict 5-size fontSize scale, CSS-var colour tokens (incl. tint), font stacks
 ├── postcss.config.js           tailwind + autoprefixer
 └── src/
     ├── main.jsx                ReactDOM root, StrictMode
     ├── index.css               @font-face, theme CSS vars, .num/.press/.shimmer/.scroller, reduced-motion kill-switch, safe-area padding
     ├── config.js               LOCATION (Edinburgh), proxy chain + fetchViaProxy, date helpers (todayISO, parseISO, dayOfYear, mondayOf)
+    ├── config.test.js          date-helper unit tests (local-vs-UTC, leap years, Mon-first weeks, DST boundaries)
+    ├── test/setup.js           jest-dom matchers + jsdom localStorage shim (Node 25 ships a method-less built-in)
     ├── hooks/
     │   ├── useFetchData.js     shared fetch hook (interval refresh, transform, custom fetcher)
     │   └── useLocalStorage.js  JSON get/set with functional updates
-    ├── lib/                    pure JSX-free modules (node-testable)
-    │   ├── backup.js           export/validate/apply for dashboard_ key backups (all-or-nothing)
-    │   └── studyActivity.js    heatmap grid + intensity logic for StudyActivityWidget
+    ├── lib/                    pure JSX-free modules (node-tested — *.test.js siblings)
+    │   ├── backup.js           export/validate/apply for dashboard_ key backups (all-or-nothing) — backup.test.js + backup.localStorage.test.js
+    │   ├── readiness.js        readiness scoring for Today's Focus (formula in its comment block) — readiness.test.js
+    │   └── studyActivity.js    heatmap grid + intensity logic for StudyActivityWidget — studyActivity.test.js
     ├── data/
     │   ├── vocabulary.json         279 words
     │   ├── german-exercises.json   140 exercises
@@ -63,14 +71,16 @@ dashboard/                      ← git repo root (remote "github")
         ├── GermanWidget.jsx    fill-the-blank dialogues, streak + week calendar
         ├── CimaWidget.jsx      4-module MCQ bank, spaced repetition, daily challenge
         ├── EyWidget.jsx        countdown, milestone checklist, weekly hours log
-        └── StudyActivityWidget.jsx  12-week contribution heatmap over stored study data
+        ├── StudyActivityWidget.jsx  12-week contribution heatmap over stored study data
+        ├── ReadinessWidget.jsx Today's Focus — top-2 study-readiness rows scored by src/lib/readiness.js
+        └── StockWidget.test.jsx, CimaWidget.test.jsx  widget smoke tests (jsdom; proxy-chain fetch mock / spaced-repetition + daily determinism)
 ```
 
 The prompt library (boot prompt, task prompts) lives one level **above** the repo root in `dashboard artifacts/` and is not committed here.
 
 ## 3. Widget Inventory
 
-Order/config lives in `App.jsx` `WIDGETS` map; default order: weather, pollen, sunset, stocks, news, word, cima, german, ey, study. Only CIMA spans 2 columns (`sm:col-span-2 lg:col-span-2`). All widgets are self-contained (useState/useLocalStorage), wrapped in `ErrorBoundary`.
+Order/config lives in `App.jsx` `WIDGETS` map; default order: readiness, weather, pollen, sunset, stocks, news, word, cima, german, ey, study (existing saved orders get `readiness` appended by the healing line — never reset). Only CIMA spans 2 columns (`sm:col-span-2 lg:col-span-2`). All widgets are self-contained (useState/useLocalStorage), wrapped in `ErrorBoundary`. **CIMA and German are `React.lazy`** (2026-07-12): their code + JSON banks load as separate precached chunks on mount, behind content-shaped Card+Skeleton Suspense fallbacks (`CimaFallback`/`GermanFallback` in App.jsx) inside their ErrorBoundaries.
 
 Edit-layout mode (header "Edit layout") additionally shows an **Export data / Import data** bar: export downloads every `dashboard_` key as `dashboard-backup-YYYY-MM-DD.json` (raw string values); import validates the whole file (only `dashboard_` keys, parseable values), shows an inline confirm (key count + export date), applies all-or-nothing via `src/lib/backup.js` (snapshot rollback), then reloads the page. Pending import state clears when leaving edit mode.
 
@@ -143,6 +153,13 @@ App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the *
 - **Interactions:** day cells are far below the 44px minimum, so the grid is **one** interactive surface — taps delegate from the `<svg>` (data-iso on rects), arrow keys move the selection when focused (`focusRing` on the svg), selected cell gets a `--focus` stroke; summary is inline (`aria-live="polite"`), never a tooltip.
 - **Notes:** no fetch, no skeleton (synchronous localStorage read); renders sanely on a fresh install (all-`card2` grid, "0 active days" line).
 
+### ReadinessWidget (`src/components/ReadinessWidget.jsx`) — "Today's Focus"
+- **Displays:** the top 2 most-urgent study tracks by deterministic readiness score (0–100, higher = more urgent): rank digit, track name ("CIMA BA3" / "German" / "EY milestones"), one-line plain-English reason ("Accuracy 61%, last studied 4 days ago" / "3 communication milestones overdue"), score. Helper line "Higher score = more urgent · tap to jump".
+- **Data:** reads `dashboard_cima_attempts`, `dashboard_cima_reviewQueue`, `dashboard_germanStats`, `dashboard_germanDates`, `dashboard_germanStreak`, `dashboard_germanMistakes`, `dashboard_ey_milestoneStatus` + `ey-milestones.json` — read-only, parsed defensively; static per-load snapshot (useState initialiser), no fetch, no skeleton. Scoring is pure in `src/lib/readiness.js` (formula documented in its comment block: CIMA/German = accuracy pressure +45 below the 80% goal, recency decay +35 via 1−e^(−days/4), backlog +20 at 2/item cap 10; EY = overdue pressure +60 at 12/milestone cap 5, deadline proximity +40 inside 14 days; fixed tiebreak ey < BA1–BA4 < german).
+- **localStorage:** none written.
+- **Interactions:** each row is a full-width ≥44px button scrolling to its card via the `widget-<id>` anchors (smooth; `auto` under reduced motion — same pattern as BriefingStrip).
+- **Notes:** untouched tracks emit no row (no nagging about un-adopted tracks); fresh install → one-line empty state; all scores 0 → distinct "All caught up" state. Every digit in `.num` (reason strings pass through a `numify` splitter); amber appears only on the EY score when milestones are overdue, and the reason then always contains the word "overdue" (never colour-only). Deliberately **not** a replacement for BriefingStrip — glance strip vs recommendation are different jobs.
+
 ## 4. Shared Utilities
 
 - **`src/config.js`** — `LOCATION` (Edinburgh 55.9533, −3.1883, Europe/London); `PROXIES` chain and `fetchViaProxy(url, {timeout=8000})`: tries `/api/proxy?url=` (same-origin Vercel function) → `api.allorigins.win` → `corsproxy.io`, each attempt with its own AbortController timeout, first OK response wins; `PROXY` (legacy export = first proxy); date helpers `todayISO` (local, never `toISOString`), `parseISO` (local midnight), `dayOfYear`, `mondayOf` (Mon-first).
@@ -150,7 +167,8 @@ App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the *
 - **`src/hooks/useFetchData.js`** — `{data, loading, error, lastUpdated, refresh}`; optional `transform` (e.g. RSS→JSON), `fetcher` (proxy chain), `refreshInterval`, `enabled`; alive-ref guard against post-unmount setState.
 - **`src/hooks/useLocalStorage.js`** — JSON parse/stringify with try/catch, functional updates supported.
 - **`src/lib/backup.js`** — pure backup logic for App.jsx's Edit-layout Export/Import: `collectBackup` (every `dashboard_` key, values as raw JSON strings for byte-for-byte round-trips), `validateBackup` (whole-file validation before any write), `applyBackup` (all-or-nothing with snapshot rollback, removes keys it added on failure), `backupFilename`. Never reads or writes non-`dashboard_` keys.
-- **`src/lib/studyActivity.js`** — pure heatmap logic: `readActivity` (defensive multi-key read), `activityTotal`/`intensityLevel` (4 steps, capped), `LEVEL_OPACITY`, `buildGrid` (12 Mon-first week columns, local-time maths, future flags). Both lib modules are JSX-free so they can be exercised in node.
+- **`src/lib/studyActivity.js`** — pure heatmap logic: `readActivity` (defensive multi-key read), `activityTotal`/`intensityLevel` (4 steps, capped), `LEVEL_OPACITY`, `buildGrid` (12 Mon-first week columns, local-time maths, future flags).
+- **`src/lib/readiness.js`** — pure readiness scoring for ReadinessWidget: `readTrackInputs(storage)` (defensive multi-key read, entries dropped rather than trusted), `recency(days)` (saturating exponential), `scoreTracks(inputs, {milestones, today})` (per-track scores + reason strings, deterministic tiebreak; milestones injectable for tests). All three lib modules are JSX-free and exercised in node by their `*.test.js` siblings.
 - **`src/components/ui.jsx`** — all shared primitives (list in §2) plus `focusRing`, `press`, `buzz()` haptic.
 - **CORS:** Open-Meteo called directly (has CORS); BBC RSS and Yahoo Finance always via the proxy chain. Service worker: `/api/` is **NetworkOnly** (never cached — a cached proxy response once shadowed fresh ticker fetches); Open-Meteo and public proxies NetworkFirst (15 min), Google Fonts CacheFirst (30 days).
 - **Error handling:** per-widget `ErrorBoundary` (crash → message + "Reload widget"); fetch errors → shared `ErrorState` with Retry; StockWidget degrades per-ticker ("no data") and only shows the error state when nothing loads; ticker add distinguishes invalid symbol vs network failure.
@@ -159,7 +177,7 @@ App.jsx also renders (top to bottom): the header, a 1px gradient hairline, the *
 
 Canonical token table, card pattern, colour policy, type scale, and motion rules live in **`../dashboard-boot-prompt.md`** ("Design tokens" section) — that file is the source of truth; this section records how they are implemented.
 
-- **Themes:** two dark themes as CSS variables in `index.css` — `:root`/`html[data-theme='slate']` (bg `#0f172a`, card `#1e293b`, card2 `#283548`, ink `#e2e8f0`, mut `#94a3b8`, line/line2/veil slate-alpha, focus `#cbd5e1`) and `html[data-theme='amoled']` (bg `#000000`, card `#0b0d13`, card2 `#161923`, ink `#e5e8ee`, mut `#8d97a9`). Mapped to Tailwind colour names (`bg-card`, `text-mut`, …) in `tailwind.config.js`. Pre-paint script in `index.html` applies the saved theme and syncs `theme-color` meta; `App.jsx` keeps both in sync on toggle.
+- **Themes:** two dark themes as CSS variables in `index.css` — `:root`/`html[data-theme='slate']` (bg `#0f172a`, card `#1e293b`, card2 `#283548`, ink `#e2e8f0`, mut `#94a3b8`, line/line2/veil slate-alpha, focus `#cbd5e1`) and `html[data-theme='amoled']` (bg `#000000`, card `#0b0d13`, card2 `#161923`, ink `#e5e8ee`, mut `#8d97a9`); plus `tint` rgba(148,163,184,.15) — muted badge/status fill, identical in both themes (2026-07-12, replaces Badge's raw `bg-slate-400/15`). Mapped to Tailwind colour names (`bg-card`, `text-mut`, …) in `tailwind.config.js`. Pre-paint script in `index.html` applies the saved theme and syncs `theme-color` meta; `App.jsx` keeps both in sync on toggle.
 - **Accents (semantic only):** emerald-400/rose-400 for stock moves + quiz right/wrong + completion ✓; amber-400 warnings; gold `#f0b429` reserved to SunsetWidget's best day; CIMA module identity colours (blue/emerald/violet/amber 500); EY categories cyan/pink/indigo/slate 500. No blue UI accent.
 - **Type:** DM Sans body, Space Grotesk `font-display` (titles/h1 only), JetBrains Mono for every digit via `.num` (`slashed-zero tabular-nums` — works because self-hosted). Strict five-size scale enforced by the Tailwind `fontSize` override (12/14/16/20/28).
 - **Layout:** `max-w-grid` (1600px); grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4`; only CIMA spans 2. Card = `bg-card rounded-2xl border border-line p-4`, no shadows anywhere. `#root` pads all four safe-area insets.
@@ -203,6 +221,8 @@ useState + two custom hooks only — no Context/Redux/reducers. Nothing is share
 
 **Heatmap + backup round (2026-07-11): no new keys.** Study Activity reads `dashboard_cima_dailyCompleted` / `dashboard_germanDates` / `dashboard_wordVoteDate` and writes nothing (`dashboard_widgetOrder` gains the `study` id via the existing healing append). Export/Import covers every `dashboard_`-prefixed key by prefix scan — raw string values, whole-file validation, all-or-nothing apply — so new keys are automatically included in backups.
 
+**Readiness + hygiene round (2026-07-12): no new keys.** Today's Focus reads `dashboard_cima_attempts`, `dashboard_cima_reviewQueue`, `dashboard_germanStats`, `dashboard_germanDates`, `dashboard_germanStreak`, `dashboard_germanMistakes`, `dashboard_ey_milestoneStatus` and writes nothing (`dashboard_widgetOrder` gains the `readiness` id via the existing healing append). The Vitest suite touches localStorage only inside jsdom test environments.
+
 ## 7. Data Files
 
 All parsed and counted directly from the JSON on 2026-07-11:
@@ -217,18 +237,19 @@ All parsed and counted directly from the JSON on 2026-07-11:
 - **Build/dev:** clean — build exit 0, no warnings beyond none; dev 200. No console errors observable without a browser (see USER VERIFY).
 - **Public proxy fallbacks are best-effort:** `api.allorigins.win` and `corsproxy.io` are third-party and historically flaky; the same-origin `/api/proxy` is primary. `www.theguardian.com` is allowlisted in `api/proxy.js` but nothing calls it (leftover — harmless).
 - ~~Weather emoji icons~~ / ~~weather 7-day 4+3 wrap~~ — **resolved in the 2026-07-11 overhaul** (shared `WeatherIcon` with exact WMO matching; single 7-across `.scroller` strip).
-- **Main JS chunk is 518 kB minified** (just over Vite's 500 kB warning line since the overhaul; 156 kB gzip) — informational, no code-splitting yet.
-- **German "Show translation" toggle is `min-h-[24px]`** (pre-dates the overhaul) — below the 44px touch rule; fixing it inline changes dialogue-line rhythm, so it's parked as a known exception.
+- ~~Main JS chunk 518 kB~~ — **resolved 2026-07-12**: CIMA + German are `React.lazy` chunks (main 291.44 kB, no Vite warning). Known limitation: React 18's `lazy` caches a failed chunk load until page reload, so "Reload widget" won't refetch it — practically unreachable installed, since all chunks are precached by the service worker.
+- ~~German "Show translation" toggle `min-h-[24px]`~~ — **resolved 2026-07-12** via an `after:` overlay (24px visual box + 4px up + 16px down = 44px hit area, `-inset-x-2` widening; zero layout shift, dialogue rhythm unchanged).
 - **BriefingStrip duplicates two fetches once per page load** (sunset forecast, watchlist quotes) rather than sharing widget state — deliberate: widgets stay self-contained; the strip has no refresh interval.
-- **Raw palette classes outside tokens (deliberate, reserved):** CIMA module colours, EY category colours, emerald/rose/amber semantic accents, and `Badge`'s muted tint `bg-slate-400/15` (ui.jsx) — the last is the one raw `slate-*` in a component and could move to a token someday.
+- **Raw palette classes outside tokens (deliberate, reserved):** CIMA module colours, EY category colours, and emerald/rose/amber semantic accents. `Badge`'s muted tint moved to the `tint` token on 2026-07-12 — no raw `slate-*` remains in components.
 - **`useFetchData` interval doesn't restart on manual `refresh()`** and its `load` deliberately omits `transform`/`fetcher` from deps (eslint-disabled) — fine in practice since both are static per widget.
 - **Accordion `maxHeight` measured once per toggle** (`ref.current?.scrollHeight`): content that grows while open (CIMA history gaining entries) can clip until re-toggled. Minor.
 - **StockWidget effect keys off `tickers.join(',')`** (eslint-disabled) — correct behaviour, just a lint suppression to note.
 - **Hardcoded values that could be config:** pollen thresholds (`TYPES` in PollenWidget), news keyword lists (`FILTERS` in NewsWidget), stock defaults (`DEFAULTS`), EY check-in day (26), window start `2026-04-01`. All deliberate so far.
-- **No tests, no linting** — the strict conventions are enforced by prompts/audits only.
+- ~~No tests, no linting~~ — **resolved 2026-07-12**: Vitest suite (96 tests / 7 files — config date helpers, backup, studyActivity, readiness, StockWidget ticker validation, CIMA spaced repetition + daily determinism, backup round-trip; mutation-checked: 8 deliberate logic breaks each failed their covering test) + ESLint 9 flat config (`npm run lint` exit 0; expected residue is 7 `react-refresh/only-export-components` **warnings** on the load-bearing mixed-export files — ui.jsx, SunsetWidget, StockWidget). Design conventions beyond that are still enforced by prompts/audits.
 - **Case-sensitivity:** deploy target is case-sensitive; component filenames are canonical as listed (notably `CimaWidget.jsx`, not `CIMAWidget.jsx`).
 
-**USER VERIFY** (no browser tooling available in this session — checked build + HTTP only):
+**USER VERIFY** (no browser tooling available in this session — checked build + tests + HTTP only):
 - Open the dev/prod app with DevTools console: confirm zero errors/warnings on load in both themes.
-- Confirm PWA install + offline render still works after the font precache change (SW precaches 14 entries incl. 3 woff2).
-- Spot-check slashed zeros on a real device at 12px (Stocks prices, CIMA dates).
+- Confirm PWA install + offline render still works after the code-split (SW now precaches 17 entries incl. the two lazy widget chunks + 3 woff2) — in particular that CIMA and German render offline.
+- On the phone: tap a Today's Focus row and confirm it scrolls to the right card; confirm the CIMA/German skeletons are only briefly visible on first load.
+- Spot-check slashed zeros on a real device at 12px (Stocks prices, CIMA dates, Today's Focus scores).

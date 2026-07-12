@@ -1,6 +1,6 @@
 # CLAUDE.md — Ethan's Dashboard
 
-Personal React + Vite + Tailwind PWA, 10 widgets, dark-only (slate/amoled themes). Primary device: installed PWA on a Pixel 9a (~412px).
+Personal React + Vite + Tailwind PWA, 11 widgets, dark-only (slate/amoled themes). Primary device: installed PWA on a Pixel 9a (~412px).
 
 ## Canonical references — read these, don't restate them
 
@@ -35,4 +35,4 @@ Personal React + Vite + Tailwind PWA, 10 widgets, dark-only (slate/amoled themes
 - Digits render in `.num` (self-hosted JetBrains Mono, slashed-zero) — never in DM Sans/Space Grotesk. Five font sizes only.
 - Use the shared primitives in `src/components/ui.jsx` (Card, buttons, Segmented, Accordion, Skeleton…) — don't restyle.
 - Component filenames are canonical and case-sensitive in deploy (`CimaWidget.jsx`, not `CIMAWidget.jsx`).
-- No test framework or linter — `npm run build` must exit 0 before any commit.
+- `npm run test` (Vitest — unit tests for every `src/lib` module + config date helpers, smoke tests for the regression-prone widgets) and `npm run lint` (ESLint 9 flat config; react-refresh warnings on the load-bearing mixed-export files are expected) must pass, and `npm run build` must exit 0, before any commit.
