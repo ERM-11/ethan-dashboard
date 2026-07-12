@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { ChevronUp, ChevronDown, Moon, Eclipse, Download, Upload, TriangleAlert } from 'lucide-react'
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { ChevronUp, ChevronDown, Moon, Eclipse, Download, Upload, TriangleAlert, GraduationCap, Languages } from 'lucide-react'
 import useLocalStorage from './hooks/useLocalStorage.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import BriefingStrip from './components/BriefingStrip.jsx'
-import { focusRing, press, GhostBtn, SecondaryBtn, PrimaryBtn } from './components/ui.jsx'
+import { focusRing, press, GhostBtn, SecondaryBtn, PrimaryBtn, Card, Skeleton } from './components/ui.jsx'
 import { collectBackup, backupFilename, validateBackup, applyBackup } from './lib/backup.js'
 import WeatherWidget from './components/WeatherWidget.jsx'
 import PollenWidget from './components/PollenWidget.jsx'
@@ -11,11 +11,41 @@ import SunsetWidget from './components/SunsetWidget.jsx'
 import NewsWidget from './components/NewsWidget.jsx'
 import StockWidget from './components/StockWidget.jsx'
 import WordWidget from './components/WordWidget.jsx'
-import GermanWidget from './components/GermanWidget.jsx'
-import CimaWidget from './components/CimaWidget.jsx'
 import EyWidget from './components/EyWidget.jsx'
 import StudyActivityWidget from './components/StudyActivityWidget.jsx'
 import ReadinessWidget from './components/ReadinessWidget.jsx'
+
+// The two heaviest widgets (each carries a large exercise/question JSON bank)
+// load in their own chunks; content-shaped Suspense fallbacks below.
+const CimaWidget = lazy(() => import('./components/CimaWidget.jsx'))
+const GermanWidget = lazy(() => import('./components/GermanWidget.jsx'))
+
+// skeletons mirror the real card layout (h-11 rows = 44px controls)
+function CimaFallback() {
+  return (
+    <Card icon={GraduationCap} title="CIMA Study Tracker">
+      <div className="flex gap-1">{[0,1,2,3].map(i => <Skeleton key={i} className="h-11 flex-1" />)}</div>
+      <div className="grid grid-cols-2 gap-2">{[0,1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
+      <Skeleton className="h-2 w-full" />
+      <Skeleton className="h-48 rounded-xl" />
+      <div className="flex flex-wrap gap-2">{[0,1,2].map(i => <Skeleton key={i} className="h-11 w-28" />)}</div>
+    </Card>
+  )
+}
+function GermanFallback() {
+  return (
+    <Card icon={Languages} title="German Practice">
+      <Skeleton className="h-3 w-32" />
+      {[0,1,2].map(i => (
+        <div key={i} className="flex flex-col gap-1">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+      ))}
+      <div className="flex gap-2"><Skeleton className="h-11 w-24" /><Skeleton className="h-11 w-40" /></div>
+    </Card>
+  )
+}
 
 const WIDGETS = {
   readiness: { name: "Today's Focus", el: ReadinessWidget, span: false },
@@ -25,8 +55,8 @@ const WIDGETS = {
   stocks: { name: 'Stocks', el: StockWidget, span: false },
   news: { name: 'News', el: NewsWidget, span: false },
   word: { name: 'Word of the Day', el: WordWidget, span: false },
-  cima: { name: 'CIMA Study', el: CimaWidget, span: true },
-  german: { name: 'German Practice', el: GermanWidget, span: false },
+  cima: { name: 'CIMA Study', el: CimaWidget, span: true, fallback: CimaFallback },
+  german: { name: 'German Practice', el: GermanWidget, span: false, fallback: GermanFallback },
   ey: { name: 'EY Tracker', el: EyWidget, span: false },
   study: { name: 'Study Activity', el: StudyActivityWidget, span: false }
 }
@@ -229,7 +259,9 @@ export default function App() {
                 </div>
               )}
               <ErrorBoundary name={w.name}>
-                <W />
+                <Suspense fallback={w.fallback ? <w.fallback /> : null}>
+                  <W />
+                </Suspense>
               </ErrorBoundary>
             </div>
           )

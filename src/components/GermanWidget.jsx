@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Languages, Flame } from 'lucide-react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
-import { todayISO, parseISO, mondayOf } from '../config.js'
+import { todayISO, mondayOf } from '../config.js'
 import { Card, PrimaryBtn, SecondaryBtn, GhostBtn, ProgressBar, Segmented, focusRing, buzz, inputCls } from './ui.jsx'
 import exercises from '../data/german-exercises.json'
 
@@ -100,7 +100,7 @@ export default function GermanWidget() {
                     </p>
                   )}
                   <button onClick={() => setShowTrans({ ...showTrans, [i]: !showTrans[i] })}
-                    className={`text-xs text-mut hover:text-ink min-h-[24px] ${focusRing}`}>
+                    className={`relative text-xs text-mut hover:text-ink min-h-[24px] after:absolute after:content-[''] after:-inset-x-2 after:-top-1 after:-bottom-4 ${focusRing}`}>
                     {showTrans[i] ? d.english : 'Show translation'}
                   </button>
                 </div>

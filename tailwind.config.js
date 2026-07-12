@@ -26,7 +26,8 @@ export default {
         veil: 'var(--veil)',
         ink: 'var(--ink)',
         mut: 'var(--mut)',
-        focus: 'var(--focus)'
+        focus: 'var(--focus)',
+        tint: 'var(--tint)'
       },
       maxWidth: { grid: '1600px' }
     }

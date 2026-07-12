@@ -65,7 +65,7 @@ const badgeTints = {
   ok: 'bg-emerald-400/15 text-emerald-400',
   warn: 'bg-amber-400/15 text-amber-400',
   danger: 'bg-rose-400/15 text-rose-400',
-  muted: 'bg-slate-400/15 text-mut'
+  muted: 'bg-tint text-mut'
 }
 export function Badge({ tone = 'muted', children }) {
   return (

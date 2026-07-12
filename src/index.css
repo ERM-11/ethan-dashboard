@@ -42,6 +42,7 @@ html[data-theme='slate'] {
   --ink: #e2e8f0;
   --mut: #94a3b8;
   --focus: #cbd5e1;
+  --tint: rgba(148, 163, 184, 0.15); /* muted badge/status fill */
   --glow: radial-gradient(1100px 520px at 50% -140px, rgba(64, 84, 120, 0.22), transparent 70%);
 }
 html[data-theme='amoled'] {
@@ -54,6 +55,7 @@ html[data-theme='amoled'] {
   --ink: #e5e8ee;
   --mut: #8d97a9;
   --focus: #cbd5e1;
+  --tint: rgba(148, 163, 184, 0.15); /* muted badge/status fill */
   --glow: radial-gradient(1100px 520px at 50% -140px, rgba(64, 84, 120, 0.06), transparent 70%);
 }
 
