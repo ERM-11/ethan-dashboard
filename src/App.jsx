@@ -15,8 +15,10 @@ import GermanWidget from './components/GermanWidget.jsx'
 import CimaWidget from './components/CimaWidget.jsx'
 import EyWidget from './components/EyWidget.jsx'
 import StudyActivityWidget from './components/StudyActivityWidget.jsx'
+import ReadinessWidget from './components/ReadinessWidget.jsx'
 
 const WIDGETS = {
+  readiness: { name: "Today's Focus", el: ReadinessWidget, span: false },
   weather: { name: 'Weather', el: WeatherWidget, span: false },
   pollen: { name: 'Pollen', el: PollenWidget, span: false },
   sunset: { name: 'Sunset', el: SunsetWidget, span: false },
@@ -28,7 +30,7 @@ const WIDGETS = {
   ey: { name: 'EY Tracker', el: EyWidget, span: false },
   study: { name: 'Study Activity', el: StudyActivityWidget, span: false }
 }
-const DEFAULT_ORDER = ['weather', 'pollen', 'sunset', 'stocks', 'news', 'word', 'cima', 'german', 'ey', 'study']
+const DEFAULT_ORDER = ['readiness', 'weather', 'pollen', 'sunset', 'stocks', 'news', 'word', 'cima', 'german', 'ey', 'study']
 
 const THEME_COLOR = { slate: '#0f172a', amoled: '#000000' }
 
